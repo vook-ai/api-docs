@@ -1,0 +1,587 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/transcriptions": {
+      "get": {
+        "operationId": "ApiV1TranscriptionsController_list",
+        "summary": "List the API key owner's transcriptions",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "example": "1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "example": "10",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search over transcription names",
+            "example": "weekly sync",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "in_progress",
+            "required": false,
+            "in": "query",
+            "description": "Set to \"true\" to only return transcriptions still being processed",
+            "example": "true",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of transcriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedApiTranscriptionListDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transcriptions (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}": {
+      "get": {
+        "operationId": "ApiV1TranscriptionsController_getById",
+        "summary": "Get a transcription by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcription metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTranscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transcriptions (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/transcript": {
+      "get": {
+        "operationId": "ApiV1TranscriptionsController_getTranscript",
+        "summary": "Get the transcript text for a transcription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcript paragraphs + plain text (null fields when not ready)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTranscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transcriptions (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/export": {
+      "get": {
+        "operationId": "ApiV1TranscriptionsController_export",
+        "summary": "Export a transcription in the requested format",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "required": true,
+            "in": "query",
+            "description": "Export format",
+            "example": "pdf",
+            "schema": {
+              "$ref": "#/components/schemas/ApiExportFormat"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported file in the requested format"
+          }
+        },
+        "tags": [
+          "Transcriptions (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Vook API",
+    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.",
+    "version": "v1",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "https://www.api.vook.ai",
+      "description": "Production"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "scheme": "bearer",
+        "bearerFormat": "vk_live_…",
+        "type": "http",
+        "description": "Your Vook API key (mint one from the web app)."
+      }
+    },
+    "schemas": {
+      "ApiTranscriptionStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "processing",
+          "completed",
+          "empty",
+          "failed"
+        ]
+      },
+      "ApiTranscriptionFolderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Folder ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Folder name",
+            "example": "Client calls"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ApiTranscriptionListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transcription (prediction) ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name",
+            "example": "Team weekly sync"
+          },
+          "status": {
+            "description": "Lifecycle status",
+            "example": "completed",
+            "$ref": "#/components/schemas/ApiTranscriptionStatus"
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Spoken language code, when known",
+            "example": "en"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether diarization was requested",
+            "example": false
+          },
+          "word_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total word count, when available",
+            "example": 1250
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the transcription was submitted",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "folder": {
+            "nullable": true,
+            "description": "Folder the transcription belongs to, if any",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiTranscriptionFolderDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "diarize"
+        ]
+      },
+      "PaginatedApiTranscriptionListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "The list of items for the current page",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiTranscriptionListItemDto"
+            }
+          },
+          "totalCount": {
+            "type": "number",
+            "example": 100,
+            "description": "Total number of items"
+          },
+          "currentPage": {
+            "type": "number",
+            "example": 1,
+            "description": "Current page number"
+          },
+          "lastPage": {
+            "type": "number",
+            "example": 10,
+            "description": "Last page number"
+          }
+        },
+        "required": [
+          "data",
+          "totalCount",
+          "currentPage",
+          "lastPage"
+        ]
+      },
+      "ApiTranscriptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transcription (prediction) ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name",
+            "example": "Team weekly sync"
+          },
+          "status": {
+            "description": "Lifecycle status",
+            "example": "completed",
+            "$ref": "#/components/schemas/ApiTranscriptionStatus"
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "Spoken language code, when known",
+            "example": "en"
+          },
+          "has_transcription": {
+            "type": "boolean",
+            "description": "Whether the transcript is available to fetch/export",
+            "example": true
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether diarization was requested",
+            "example": false
+          },
+          "has_been_diarized": {
+            "type": "boolean",
+            "description": "Whether diarization has completed",
+            "example": false
+          },
+          "speaker_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of detected speakers, when diarized",
+            "example": 2
+          },
+          "word_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total word count, when available",
+            "example": 1250
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the transcription was submitted",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the transcription was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "folder": {
+            "nullable": true,
+            "description": "Folder the transcription belongs to, if any",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiTranscriptionFolderDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "has_transcription",
+          "diarize",
+          "has_been_diarized",
+          "created_at"
+        ]
+      },
+      "DictionaryMatchType": {
+        "type": "string",
+        "enum": [
+          "literal",
+          "inflection",
+          "phonetic"
+        ]
+      },
+      "DictionaryEntryOrigin": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "suggestion",
+          "seed_pack"
+        ]
+      },
+      "DictionaryReplacementDto": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "number",
+            "description": "Start position of the replaced word in the text",
+            "example": 14
+          },
+          "length": {
+            "type": "number",
+            "description": "Length of the replacement word",
+            "example": 4
+          },
+          "originalWord": {
+            "type": "string",
+            "description": "The original word before dictionary replacement",
+            "example": "york"
+          },
+          "match_type": {
+            "description": "How the replacement was found: \"literal\" (exact word match), \"inflection\" (plural/singular variant of a dictionary entry), or \"phonetic\" (sounds-like match for likely Whisper mishearings)",
+            "example": "literal",
+            "$ref": "#/components/schemas/DictionaryMatchType"
+          },
+          "origin": {
+            "description": "How the matched dictionary entry got there. Lets the FE report when a user reverts a \"seed_pack\" correction. Absent on transcripts produced before this field existed.",
+            "example": "seed_pack",
+            "$ref": "#/components/schemas/DictionaryEntryOrigin"
+          }
+        },
+        "required": [
+          "offset",
+          "length",
+          "originalWord",
+          "match_type"
+        ]
+      },
+      "TranscriptParagraphChildDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text content of the child",
+            "example": "Hello world"
+          },
+          "startTimeSeconds": {
+            "type": "number",
+            "description": "Start time of this segment in seconds",
+            "example": 1.2
+          },
+          "endTimeSeconds": {
+            "type": "number",
+            "description": "End time of this segment in seconds",
+            "example": 3.4
+          },
+          "dictionaryReplacements": {
+            "description": "Dictionary replacements applied to this segment",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DictionaryReplacementDto"
+            }
+          },
+          "bold": {
+            "type": "boolean",
+            "description": "Bold formatting"
+          },
+          "italic": {
+            "type": "boolean",
+            "description": "Italic formatting"
+          },
+          "underline": {
+            "type": "boolean",
+            "description": "Underline formatting"
+          },
+          "strikethrough": {
+            "type": "boolean",
+            "description": "Strikethrough formatting"
+          },
+          "highlight": {
+            "type": "boolean",
+            "description": "Highlight formatting"
+          },
+          "noSpaceBefore": {
+            "type": "boolean",
+            "description": "Frontend concatenation hint: when true, the UI joins this child to the previous one with no space separator. Round-tripped verbatim."
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "TranscriptParagraphDto": {
+        "type": "object",
+        "properties": {
+          "speakerKey": {
+            "type": "string",
+            "description": "Speaker key (e.g. SPEAKER_00)",
+            "example": "SPEAKER_00"
+          },
+          "startTimeSeconds": {
+            "type": "number",
+            "description": "Start time of the paragraph block in seconds",
+            "example": 5
+          },
+          "children": {
+            "description": "Paragraph children (text segments)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranscriptParagraphChildDto"
+            }
+          }
+        },
+        "required": [
+          "children"
+        ]
+      },
+      "GetTranscriptionDto": {
+        "type": "object",
+        "properties": {
+          "plain_text": {
+            "type": "string",
+            "nullable": true,
+            "description": "Plain text version of the transcript (null when not ready)",
+            "example": "Hello world. This is a transcription."
+          },
+          "transcription": {
+            "nullable": true,
+            "description": "Structured transcript paragraphs (null when not ready)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranscriptParagraphDto"
+            }
+          },
+          "word_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total word count of the transcript",
+            "example": 1250
+          }
+        }
+      },
+      "ApiExportFormat": {
+        "type": "string",
+        "enum": [
+          "pdf",
+          "docx",
+          "srt",
+          "md",
+          "html",
+          "json"
+        ]
+      }
+    }
+  }
+}
