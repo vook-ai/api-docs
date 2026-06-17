@@ -1,0 +1,47 @@
+---
+title: "Introduction"
+description: "Transcribe audio and video, then retrieve and export the results with a single API key."
+---
+
+The Vook API lets you work with your transcriptions programmatically: list them,
+check their status, read the transcript text, and download exports, using only
+an API key.
+
+## Base URL
+
+All requests target the versioned public surface under `/api/v1`:
+
+```
+https://www.api.vook.ai/api/v1
+```
+
+## Authentication
+
+Every request authenticates with an API key sent as a Bearer token:
+
+```bash
+Authorization: Bearer $VOOK_API_KEY
+```
+
+Keys look like `vk_live_…`. See [Authentication](/authentication) for how to
+mint and revoke them.
+
+## Requirements
+
+The examples in these guides use `curl` and Python. The Python snippets require
+**Python 3.8+** and the [`requests`](https://pypi.org/project/requests/) package:
+
+```bash
+pip install requests
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    List a transcription, read its text, and download an export.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Mint a `vk_live_…` key and send it on every request.
+  </Card>
+</CardGroup>

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Vook",
+  "colors": {
+    "primary": "#0883C6",
+    "light": "#0883C6",
+    "dark": "#0883C6"
+  },
+  "favicon": "/favicon.ico",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Documentation",
+        "pages": [
+          "introduction",
+          "quickstart",
+          "authentication"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "openapi": "api-reference/openapi.json"
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Vook app",
+        "href": "https://www.vook.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get API key",
+      "href": "https://www.vook.ai/settings/infos"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://www.vook.ai"
+    }
+  }
+}

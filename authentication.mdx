@@ -1,0 +1,48 @@
+---
+title: "Authentication"
+description: "Mint a Vook API key and send it as a Bearer token on every request."
+---
+
+The Vook API authenticates with an API key. You mint keys from the Vook web app,
+then send the key as a Bearer token on every request.
+
+## Mint a key
+
+You create keys from the Vook web app under **Settings**, so there is nothing to
+deploy or configure first. Your account must have API access enabled. Give the
+key a name, and the app shows you a `vk_live_…` value **once**. Copy it
+immediately and store it somewhere safe, since you cannot retrieve it again.
+
+<Card title="Get an API key" icon="key" href="https://www.vook.ai/settings/infos">
+  Open Settings in the Vook web app to create and manage your keys.
+</Card>
+
+## Store the key
+
+Export the key as an environment variable so the examples in these guides can
+read it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Send the key
+
+Send the key as a Bearer token in the `Authorization` header on every request:
+
+```bash
+curl https://www.api.vook.ai/api/v1/transcriptions \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+## Key lifecycle
+
+- Keys expire **one year** after they are created.
+- Revoke a key at any time from **Settings** in the web app.
+- A revoked or expired key is rejected on the next request, so mint a new one to
+  continue.
+
+<Warning>
+  Treat `vk_live_…` keys like passwords. Do not commit them to source control or
+  expose them in client-side code. If a key leaks, revoke it and mint a new one.
+</Warning>
