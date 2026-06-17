@@ -133,10 +133,26 @@ if data["plain_text"] is not None:
 ```json
 {
   "plain_text": "Hello world. This is a transcript.",
-  "transcription": [ /* structured paragraphs */ ],
-  "word_count": 1250
+  "word_count": 1250,
+  "transcription": [
+    {
+      "speakerKey": "SPEAKER_00",
+      "startTimeSeconds": 0,
+      "children": [
+        {
+          "text": "Hello world. This is a transcript.",
+          "startTimeSeconds": 0.8,
+          "endTimeSeconds": 3.4
+        }
+      ]
+    }
+  ]
 }
 ```
+
+`plain_text` is the full transcript as a single string. `transcription` is the
+same content split into paragraphs, each with a `speakerKey` and a list of timed
+`children` text segments.
 
 ## 4. Download an export
 

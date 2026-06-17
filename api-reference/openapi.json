@@ -129,7 +129,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetTranscriptionDto"
+                  "$ref": "#/components/schemas/ApiTranscriptDto"
                 }
               }
             }
@@ -189,7 +189,7 @@
   },
   "info": {
     "title": "Vook API",
-    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.",
+    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_\u2026`.",
     "version": "v1",
     "contact": {}
   },
@@ -204,7 +204,7 @@
     "securitySchemes": {
       "apiKey": {
         "scheme": "bearer",
-        "bearerFormat": "vk_live_…",
+        "bearerFormat": "vk_live_\u2026",
         "type": "http",
         "description": "Your Vook API key (mint one from the web app)."
       }
@@ -365,11 +365,6 @@
             "description": "Whether diarization was requested",
             "example": false
           },
-          "has_been_diarized": {
-            "type": "boolean",
-            "description": "Whether diarization has completed",
-            "example": false
-          },
           "speaker_count": {
             "type": "number",
             "nullable": true,
@@ -411,63 +406,10 @@
           "status",
           "has_transcription",
           "diarize",
-          "has_been_diarized",
           "created_at"
         ]
       },
-      "DictionaryMatchType": {
-        "type": "string",
-        "enum": [
-          "literal",
-          "inflection",
-          "phonetic"
-        ]
-      },
-      "DictionaryEntryOrigin": {
-        "type": "string",
-        "enum": [
-          "manual",
-          "suggestion",
-          "seed_pack"
-        ]
-      },
-      "DictionaryReplacementDto": {
-        "type": "object",
-        "properties": {
-          "offset": {
-            "type": "number",
-            "description": "Start position of the replaced word in the text",
-            "example": 14
-          },
-          "length": {
-            "type": "number",
-            "description": "Length of the replacement word",
-            "example": 4
-          },
-          "originalWord": {
-            "type": "string",
-            "description": "The original word before dictionary replacement",
-            "example": "york"
-          },
-          "match_type": {
-            "description": "How the replacement was found: \"literal\" (exact word match), \"inflection\" (plural/singular variant of a dictionary entry), or \"phonetic\" (sounds-like match for likely Whisper mishearings)",
-            "example": "literal",
-            "$ref": "#/components/schemas/DictionaryMatchType"
-          },
-          "origin": {
-            "description": "How the matched dictionary entry got there. Lets the FE report when a user reverts a \"seed_pack\" correction. Absent on transcripts produced before this field existed.",
-            "example": "seed_pack",
-            "$ref": "#/components/schemas/DictionaryEntryOrigin"
-          }
-        },
-        "required": [
-          "offset",
-          "length",
-          "originalWord",
-          "match_type"
-        ]
-      },
-      "TranscriptParagraphChildDto": {
+      "ApiTranscriptChildDto": {
         "type": "object",
         "properties": {
           "text": {
@@ -484,13 +426,6 @@
             "type": "number",
             "description": "End time of this segment in seconds",
             "example": 3.4
-          },
-          "dictionaryReplacements": {
-            "description": "Dictionary replacements applied to this segment",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DictionaryReplacementDto"
-            }
           },
           "bold": {
             "type": "boolean",
@@ -521,7 +456,7 @@
           "text"
         ]
       },
-      "TranscriptParagraphDto": {
+      "ApiTranscriptParagraphDto": {
         "type": "object",
         "properties": {
           "speakerKey": {
@@ -538,7 +473,7 @@
             "description": "Paragraph children (text segments)",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TranscriptParagraphChildDto"
+              "$ref": "#/components/schemas/ApiTranscriptChildDto"
             }
           }
         },
@@ -546,7 +481,7 @@
           "children"
         ]
       },
-      "GetTranscriptionDto": {
+      "ApiTranscriptDto": {
         "type": "object",
         "properties": {
           "plain_text": {
@@ -555,19 +490,19 @@
             "description": "Plain text version of the transcript (null when not ready)",
             "example": "Hello world. This is a transcription."
           },
-          "transcription": {
-            "nullable": true,
-            "description": "Structured transcript paragraphs (null when not ready)",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TranscriptParagraphDto"
-            }
-          },
           "word_count": {
             "type": "number",
             "nullable": true,
             "description": "Total word count of the transcript",
             "example": 1250
+          },
+          "transcription": {
+            "nullable": true,
+            "description": "Structured transcript paragraphs (null when not ready)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiTranscriptParagraphDto"
+            }
           }
         }
       },
