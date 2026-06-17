@@ -59,8 +59,10 @@ The response is paginated:
       "name": "Team weekly sync",
       "status": "completed",
       "language": "en",
+      "diarize": true,
       "word_count": 1250,
-      "submitted_at": "2024-01-15T10:30:00.000Z"
+      "submitted_at": "2024-01-15T10:30:00.000Z",
+      "folder": null
     }
   ],
   "totalCount": 100,
@@ -141,7 +143,8 @@ if data["plain_text"] is not None:
 Download the transcription as a ready-to-share file in the format you need. The
 endpoint returns the binary file, so write the response body to disk.
 
-Supported `format` values: `pdf` (default), `docx`, `srt`, `md`, `html`, `json`.
+The `format` query parameter is required. Supported values: `pdf`, `docx`,
+`srt`, `md`, `html`, `json`.
 
 <CodeGroup>
 

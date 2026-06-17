@@ -38,7 +38,7 @@
     "primary": {
       "type": "button",
       "label": "Get API key",
-      "href": "https://www.vook.ai/settings/infos"
+      "href": "https://www.vook.ai/settings/api-keys"
     }
   },
   "footer": {
