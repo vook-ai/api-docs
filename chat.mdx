@@ -1,0 +1,163 @@
+---
+title: "Chat with a transcript"
+description: "Ask questions about a transcription and get answers grounded in its content."
+---
+
+Chat lets you ask a question about a transcription and get an answer drawn from
+what was said. You send a prompt, and Vook's AI answers using the transcript as
+its source: summaries, action items, decisions, or anything else the recording
+covers. Each exchange is saved against the transcription so you can list and
+revisit it later.
+
+<Note>
+  The base URL is `https://www.api.vook.ai/api/v1`. Chat runs against an existing
+  transcription, so you need a transcription `id` whose transcript is ready
+  (`has_transcription` is `true`). See [Retrieve and export](/retrieve-export)
+  to find one, or [Transcribe a file](/upload) to create one.
+</Note>
+
+## Before you start
+
+Mint an API key (see [Authentication](/authentication)) and export it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The Python examples use the `requests` package (`pip install requests`).
+
+## 1. Ask a question
+
+Send a `title` and a `prompt` to the transcription's `chats` collection. The
+`title` is a short label you will see when listing chats; the `prompt` is the
+question or instruction to run against the transcript.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/transcriptions/$ID/chats" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Summary",
+    "prompt": "Summarize this transcript in two sentences."
+  }'
+```
+
+```python Python
+import os, requests
+
+BASE = "https://www.api.vook.ai/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['VOOK_API_KEY']}"}
+
+resp = requests.post(
+    f"{BASE}/transcriptions/{transcription_id}/chats",
+    headers=headers,
+    json={
+        "title": "Summary",
+        "prompt": "Summarize this transcript in two sentences.",
+    },
+)
+resp.raise_for_status()
+chat = resp.json()
+print(chat["answer"])
+```
+
+</CodeGroup>
+
+The response is the chat, with its `answer`:
+
+```json
+{
+  "id": "a35f053f-0ef3-4022-9530-00d35e193605",
+  "transcription_id": "4d039fef-0be2-4283-9834-7dd43c70652e",
+  "title": "Summary",
+  "prompt": "Summarize this transcript in two sentences.",
+  "answer": "The speaker spent three months at Princess Boot Camp. They learned to ride a horse, waltz, and sing.",
+  "created_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+The request body fields are:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `title` | yes | Short label for the exchange, shown when you list chats. |
+| `prompt` | yes | Question or instruction to run against the transcript. |
+
+The `answer` is usually ready in the response. If it comes back `null`, the
+answer is still being prepared, so re-request the chat by its `id` (see
+[step 3](#3-read-a-single-chat)) until `answer` is set.
+
+## 2. List the chats
+
+Retrieve every chat saved against a transcription, newest first. Each item
+carries its `id`, `title`, and `created_at`. Fetch a chat by `id` to read its
+full `prompt` and `answer`.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/chats" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/transcriptions/{transcription_id}/chats", headers=headers
+)
+resp.raise_for_status()
+for c in resp.json()["data"]:
+    print(c["id"], c["title"])
+```
+
+</CodeGroup>
+
+```json
+{
+  "data": [
+    {
+      "id": "a35f053f-0ef3-4022-9530-00d35e193605",
+      "transcription_id": "4d039fef-0be2-4283-9834-7dd43c70652e",
+      "title": "Summary",
+      "created_at": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+## 3. Read a single chat
+
+Fetch one chat by its `id` to read its `prompt` and `answer`. Use this to pick
+up an earlier exchange, or to check for an `answer` that was not yet set when you
+created the chat.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/chats/$CHAT_ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/transcriptions/{transcription_id}/chats/{chat_id}", headers=headers
+)
+resp.raise_for_status()
+chat = resp.json()
+if chat["answer"] is not None:
+    print(chat["answer"])
+```
+
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">
+    List, read, and export your transcriptions.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Try every endpoint interactively in the playground.
+  </Card>
+</CardGroup>

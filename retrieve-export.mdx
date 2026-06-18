@@ -96,13 +96,13 @@ print(t["status"], "ready:", t["has_transcription"])
 
 The `status` field reflects where your transcription is in its lifecycle:
 
-| Status | Meaning |
-| --- | --- |
-| `queued` | Accepted, waiting to be processed. |
-| `processing` | Transcription is running. |
-| `completed` | Finished; the transcript is available. |
-| `empty` | Finished with **no detected speech**. |
-| `failed` | Processing failed. |
+| Status       | Meaning                                |
+| ------------ | -------------------------------------- |
+| `queued`     | Accepted, waiting to be processed.     |
+| `processing` | Transcription is running.              |
+| `completed`  | Finished; the transcript is available. |
+| `empty`      | Finished with **no detected speech**.  |
+| `failed`     | Processing failed.                     |
 
 ## 3. Fetch the transcript
 
@@ -158,13 +158,18 @@ same content split into paragraphs, each with a `speakerKey` and a list of timed
 Download the transcription as a ready-to-share file in the format you need. The
 endpoint returns the binary file, so write the response body to disk.
 
-The `format` query parameter is required. Supported values: `pdf`, `docx`,
-`srt`, `md`, `html`, `json`.
+Three query parameters are required:
+
+| Parameter         | Type    | Description                                                   |
+| ----------------- | ------- | ------------------------------------------------------------- |
+| `format`          | string  | Output format: `pdf`, `docx`, `srt`, `md`, `html`, or `json`. |
+| `show_timestamps` | boolean | Include start timestamps in the export.                       |
+| `show_speakers`   | boolean | Include speaker labels in the export.                         |
 
 <CodeGroup>
 
 ```bash curl
-curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/export?format=pdf" \
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/export?format=pdf&show_timestamps=true&show_speakers=true" \
   -H "Authorization: Bearer $VOOK_API_KEY" \
   -o transcript.pdf
 ```
@@ -173,7 +178,11 @@ curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/export?format=pdf" \
 resp = requests.get(
     f"{BASE}/transcriptions/{transcription_id}/export",
     headers=headers,
-    params={"format": "pdf"},
+    params={
+        "format": "pdf",
+        "show_timestamps": "true",
+        "show_speakers": "true",
+    },
 )
 resp.raise_for_status()
 with open("transcript.pdf", "wb") as f:
@@ -182,11 +191,21 @@ with open("transcript.pdf", "wb") as f:
 
 </CodeGroup>
 
+<Note>
+  `show_timestamps` and `show_speakers` are still required for an `srt` export,
+  but they do not change the output: `srt` is a standard format that always
+  carries timestamps and omits speaker labels. The same applies to a `json`
+  export, which returns the raw structured transcript.
+</Note>
+
 ## Next steps
 
 <CardGroup cols={2}>
   <Card title="Transcribe a file" icon="microphone" href="/upload">
     Create a transcription from your own audio or video.
+  </Card>
+  <Card title="Chat with a transcript" icon="comments" href="/chat">
+    Ask questions and get answers grounded in the transcript.
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference">
     Try every endpoint interactively in the playground.

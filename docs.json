@@ -21,6 +21,7 @@
           "quickstart",
           "upload",
           "retrieve-export",
+          "chat",
           "authentication"
         ]
       },

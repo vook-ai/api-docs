@@ -169,6 +169,26 @@
             "schema": {
               "$ref": "#/components/schemas/ApiExportFormat"
             }
+          },
+          {
+            "name": "show_timestamps",
+            "required": true,
+            "in": "query",
+            "description": "Show start timestamps in the export. Ignored for srt (always timestamped) and json (raw).",
+            "example": true,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "show_speakers",
+            "required": true,
+            "in": "query",
+            "description": "Show speaker labels in the export. Ignored for srt and json.",
+            "example": true,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -329,6 +349,149 @@
         },
         "tags": [
           "Transcription jobs (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/chats": {
+      "post": {
+        "operationId": "ApiV1LlmChatController_create",
+        "summary": "Ask a question about a transcript and get the answer",
+        "description": "You send a free-text prompt that runs against the transcription and get the answer back in the same response. The exchange is saved as a chat so you can list and retrieve it later. Next: GET the chat by its id to read the answer again.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiCreateChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The created chat, including the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chats (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "ApiV1LlmChatController_list",
+        "summary": "List the chats for a transcription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chats for the transcription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatListDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chats (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/chats/{chat_id}": {
+      "get": {
+        "operationId": "ApiV1LlmChatController_get",
+        "summary": "Get a single chat, including its answer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "chat_id",
+            "required": true,
+            "in": "path",
+            "description": "Chat ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested chat with its prompt and answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chats (API v1)"
         ],
         "security": [
           {
@@ -920,6 +1083,119 @@
           "transcription_ids",
           "created_at",
           "updated_at"
+        ]
+      },
+      "ApiCreateChatDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Short label for this exchange, shown when you list chats",
+            "example": "Action items"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Question or instruction to run against the transcript",
+            "example": "List the action items decided in this meeting."
+          }
+        },
+        "required": [
+          "title",
+          "prompt"
+        ]
+      },
+      "ApiChatDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Chat ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "transcription_id": {
+            "type": "string",
+            "description": "ID of the transcription this chat runs against",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "description": "Label you gave the chat",
+            "example": "Action items"
+          },
+          "prompt": {
+            "type": "string",
+            "nullable": true,
+            "description": "The prompt you sent",
+            "example": "List the action items decided in this meeting."
+          },
+          "answer": {
+            "type": "string",
+            "nullable": true,
+            "description": "The answer produced over the transcript",
+            "example": "1. Ship the API docs. 2. Review the pricing page."
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the chat was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "transcription_id",
+          "title",
+          "created_at"
+        ]
+      },
+      "ApiChatListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Chat ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "transcription_id": {
+            "type": "string",
+            "description": "ID of the transcription this chat runs against",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "description": "Label you gave the chat",
+            "example": "Action items"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the chat was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "transcription_id",
+          "title",
+          "created_at"
+        ]
+      },
+      "ApiChatListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Chats for the transcription, newest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiChatListItemDto"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "InitUploadResponseDto": {
