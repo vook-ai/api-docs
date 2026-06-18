@@ -12,6 +12,7 @@ snapshot of the production OpenAPI spec. The backend source stays private.
 docs.json                 # Mintlify config: theme, nav, logo, OpenAPI wiring
 introduction.mdx          # what the API is, base URL, beta + billing notes
 quickstart.mdx            # read flow: list, status, transcript, export
+upload.mdx                # write flow: upload a file, create + poll a job
 authentication.mdx        # minting and using vk_live_ keys
 api-reference/
   openapi.json            # snapshot of the prod spec (auto-rendered reference)
@@ -22,8 +23,7 @@ favicon.ico
 ```
 
 The **API Reference** group is generated automatically from
-`api-reference/openapi.json`. It currently covers the read endpoints; the write
-endpoints will appear once they are added to the public spec.
+`api-reference/openapi.json`.
 
 ## Preview locally
 

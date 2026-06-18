@@ -1,0 +1,242 @@
+---
+title: "Transcribe a file"
+description: "Upload an audio or video file and turn it into a transcription with three API calls."
+---
+
+This guide walks through creating a transcription from your own file. You mint a
+short-lived upload token, send the file to the upload host, then start a
+transcription job and poll it until the transcript is ready.
+
+<Note>
+  Two hosts are involved. The main API is `https://www.api.vook.ai/api/v1`. The
+  file upload in step 2 goes to a separate upload host,
+  `https://ingress.vook.ai`. Every request still authenticates with a Bearer
+  token.
+</Note>
+
+## Before you start
+
+Mint an API key (see [Authentication](/authentication)) and export it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The Python examples use the `requests` package (`pip install requests`).
+
+## The flow at a glance
+
+| Step | Call | What you get |
+| --- | --- | --- |
+| 1 | `POST /api/v1/uploads/init` | An `upload_token` for this upload. |
+| 2 | `POST https://ingress.vook.ai/upload` | The file bytes are stored. |
+| 3 | `POST /api/v1/transcription-jobs` | A job `id` to poll. |
+
+Then poll the job until it completes and read each transcription it produced.
+
+## 1. Get an upload token
+
+Request a short-lived `upload_token`. You send this token with the file in the
+next step and again when you create the job.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/uploads/init" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+import os, requests
+
+BASE = "https://www.api.vook.ai/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['VOOK_API_KEY']}"}
+
+resp = requests.post(f"{BASE}/uploads/init", headers=headers)
+resp.raise_for_status()
+upload_token = resp.json()["upload_token"]
+```
+
+</CodeGroup>
+
+```json
+{
+  "upload_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+## 2. Upload the file
+
+Send the file to the upload host as `multipart/form-data` in a single request.
+Authenticate this request with the **`upload_token`** from step 1, not your API
+key.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://ingress.vook.ai/upload" \
+  -H "Authorization: Bearer $UPLOAD_TOKEN" \
+  -F "chunk=@meeting.mp3"
+```
+
+```python Python
+INGRESS = "https://ingress.vook.ai"
+upload_headers = {"Authorization": f"Bearer {upload_token}"}
+
+with open("meeting.mp3", "rb") as f:
+    resp = requests.post(
+        f"{INGRESS}/upload",
+        headers=upload_headers,
+        files={"chunk": f},
+    )
+resp.raise_for_status()
+```
+
+</CodeGroup>
+
+The fields are:
+
+| Field | Where | Description |
+| --- | --- | --- |
+| `chunk` | form file | The raw file bytes. |
+| `Authorization` | header | `Bearer {upload_token}`. |
+
+You can ignore the response body.
+
+## 3. Create the transcription job
+
+Start the transcription. Pass the `upload_token` and the file details. The
+response gives you a job `id` and its `status`.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/transcription-jobs" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "upload_token": "'"$UPLOAD_TOKEN"'",
+    "file_name": "meeting.mp3",
+    "language": "en",
+    "diarize": false,
+    "name": "Team weekly sync"
+  }'
+```
+
+```python Python
+resp = requests.post(
+    f"{BASE}/transcription-jobs",
+    headers=headers,
+    json={
+        "upload_token": upload_token,
+        "file_name": "meeting.mp3",
+        "language": "en",
+        "diarize": False,
+        "name": "Team weekly sync",
+    },
+)
+resp.raise_for_status()
+job_id = resp.json()["id"]
+```
+
+</CodeGroup>
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "queued"
+}
+```
+
+The request body fields are:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `upload_token` | yes | The token from step 1. |
+| `file_name` | yes | The original file name. |
+| `language` | yes | Spoken language code, for example `en`. |
+| `diarize` | yes | Set `true` to separate speakers. |
+| `name` | no | Display name for the resulting transcription. |
+
+## 4. Poll the job
+
+Poll the job by `id` until its `status` is `completed`. When it finishes, the
+`transcription_ids` array holds the transcriptions it produced.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcription-jobs/$JOB_ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+import time
+
+while True:
+    resp = requests.get(f"{BASE}/transcription-jobs/{job_id}", headers=headers)
+    resp.raise_for_status()
+    job = resp.json()
+    if job["status"] in ("completed", "partial", "failed"):
+        break
+    time.sleep(5)
+
+transcription_ids = job["transcription_ids"]
+```
+
+</CodeGroup>
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "completed",
+  "name": "Team weekly sync",
+  "language": "en",
+  "diarize": false,
+  "transcription_ids": ["123e4567-e89b-12d3-a456-426614174000"],
+  "error_code": null,
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "updated_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+The `status` field reflects where the job is in its lifecycle:
+
+| Status | Meaning |
+| --- | --- |
+| `queued` | Accepted, waiting to be processed. |
+| `processing` | The job is running. |
+| `completed` | Finished; `transcription_ids` is ready. |
+| `partial` | Finished with some transcriptions produced and others not. |
+| `failed` | The job did not produce a transcription. |
+
+When the job ends as `partial` or `failed`, `error_code` carries a short code
+describing the cause.
+
+## 5. Read the result
+
+Each id in `transcription_ids` is a regular transcription. Read it with the
+endpoints from the [Quickstart](/quickstart): fetch its status and metadata, get
+the transcript text, or download an export.
+
+```python Python
+for transcription_id in transcription_ids:
+    resp = requests.get(
+        f"{BASE}/transcriptions/{transcription_id}/transcript", headers=headers
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if data["plain_text"] is not None:
+        print(data["plain_text"])
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    Read a transcript and download an export.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Try every endpoint interactively in the playground.
+  </Card>
+</CardGroup>

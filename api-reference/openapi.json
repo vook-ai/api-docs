@@ -185,11 +185,199 @@
           }
         ]
       }
+    },
+    "/api/v1/transcription-jobs": {
+      "post": {
+        "operationId": "ApiV1TranscriptionJobsController_create",
+        "summary": "Create a transcription job from an uploaded file (call 3); returns the job id + status",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiCreateTranscriptionJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transcription job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiCreateTranscriptionJobResponseDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiCreateTranscriptionJobResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transcription jobs (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "ApiV1TranscriptionJobsController_list",
+        "summary": "List the API key owner's transcription jobs",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "example": "1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "example": "10",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search over transcription names",
+            "example": "weekly sync",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "in_progress",
+            "required": false,
+            "in": "query",
+            "description": "Set to \"true\" to only return transcriptions still being processed",
+            "example": "true",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of transcription jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedApiTranscriptionJobListDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transcription jobs (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/transcription-jobs/{id}": {
+      "get": {
+        "operationId": "ApiV1TranscriptionJobsController_getById",
+        "summary": "Get a transcription job by ID (status + transcription_ids)",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription job ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcription job metadata + produced transcription ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTranscriptionJobDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transcription jobs (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/uploads/init": {
+      "post": {
+        "operationId": "UploadsController_init",
+        "summary": "Mint a scoped upload token for an ingress file upload",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A short-lived upload token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitUploadResponseDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitUploadResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Uploads (API v1)"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
     "title": "Vook API",
-    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_\u2026`.",
+    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.\n\n## Transcribe a file (3 calls)\n\n1. **`POST /api/v1/uploads/init`** → returns an `upload_token`.\n2. **`POST {ingress}/upload`**: upload the whole file to the ingress host (`https://ingress.vook.ai`, **a different host from this API**) as `multipart/form-data` with a single `chunk` field, authenticated with `Authorization: Bearer {upload_token}`. The file is sent as a single chunk; no chunk index/count is needed. This step is on the ingress service and is not listed below.\n3. **`POST /api/v1/transcription-jobs`**: pass the `upload_token` + `file_name` + `language` + `diarize`. Returns a job `id`.\n\nThen **poll `GET /api/v1/transcription-jobs/{id}`** until `status` is `completed` (or `partial`/`failed`). Read each id in `transcription_ids` through **`GET /api/v1/transcriptions/{id}`** and its `/transcript` / `/export` sub-resources.\n\nBilling is metered per transcription and invoiced monthly; the job dispatch never fails for credit balance.",
     "version": "v1",
     "contact": {}
   },
@@ -204,7 +392,7 @@
     "securitySchemes": {
       "apiKey": {
         "scheme": "bearer",
-        "bearerFormat": "vk_live_\u2026",
+        "bearerFormat": "vk_live_…",
         "type": "http",
         "description": "Your Vook API key (mint one from the web app)."
       }
@@ -515,6 +703,236 @@
           "md",
           "html",
           "json"
+        ]
+      },
+      "ApiCreateTranscriptionJobDto": {
+        "type": "object",
+        "properties": {
+          "upload_token": {
+            "type": "string",
+            "description": "Upload token returned by POST /api/v1/uploads/init"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Original file name",
+            "example": "meeting.mp3"
+          },
+          "language": {
+            "type": "string",
+            "description": "Spoken language code",
+            "example": "en"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether to diarize (separate speakers)",
+            "example": false
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Display name for the resulting transcription(s)",
+            "example": "Team weekly sync"
+          }
+        },
+        "required": [
+          "upload_token",
+          "file_name",
+          "language",
+          "diarize"
+        ]
+      },
+      "TranscriptionJobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "processing",
+          "completed",
+          "partial",
+          "failed"
+        ]
+      },
+      "ApiCreateTranscriptionJobResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transcription job ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "description": "Job lifecycle status",
+            "example": "queued",
+            "$ref": "#/components/schemas/TranscriptionJobStatus"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "ApiTranscriptionJobListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transcription job ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "description": "Job lifecycle status",
+            "example": "completed",
+            "$ref": "#/components/schemas/TranscriptionJobStatus"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name for the job",
+            "example": "Team weekly sync"
+          },
+          "language": {
+            "type": "string",
+            "description": "Spoken language code",
+            "example": "en"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether diarization was requested",
+            "example": false
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the job was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the job was last updated",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "language",
+          "diarize",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "PaginatedApiTranscriptionJobListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "The list of items for the current page",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiTranscriptionJobListItemDto"
+            }
+          },
+          "totalCount": {
+            "type": "number",
+            "example": 100,
+            "description": "Total number of items"
+          },
+          "currentPage": {
+            "type": "number",
+            "example": 1,
+            "description": "Current page number"
+          },
+          "lastPage": {
+            "type": "number",
+            "example": 10,
+            "description": "Last page number"
+          }
+        },
+        "required": [
+          "data",
+          "totalCount",
+          "currentPage",
+          "lastPage"
+        ]
+      },
+      "ApiTranscriptionJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transcription job ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "description": "Job lifecycle status",
+            "example": "completed",
+            "$ref": "#/components/schemas/TranscriptionJobStatus"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name for the job",
+            "example": "Team weekly sync"
+          },
+          "language": {
+            "type": "string",
+            "description": "Spoken language code",
+            "example": "en"
+          },
+          "diarize": {
+            "type": "boolean",
+            "description": "Whether diarization was requested",
+            "example": false
+          },
+          "transcription_ids": {
+            "description": "IDs of the transcriptions this job produced. Read each via GET /api/v1/transcriptions/:id.",
+            "example": [
+              "123e4567-e89b-12d3-a456-426614174000"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Failure code when the job failed (or partially failed)",
+            "example": null
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the job was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the job was last updated",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "language",
+          "diarize",
+          "transcription_ids",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "InitUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "upload_token": {
+            "type": "string",
+            "description": "Short-lived JWT scoped to this upload session. Send as `Authorization: Bearer <upload_token>` to the ingress /upload-chunk endpoint and echo it back to process-chunks.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "upload_token"
         ]
       }
     }
