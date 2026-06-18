@@ -162,7 +162,7 @@ Three query parameters are required:
 
 | Parameter         | Type    | Description                                                   |
 | ----------------- | ------- | ------------------------------------------------------------- |
-| `format`          | string  | Output format: `pdf`, `docx`, `srt`, `md`, `html`, or `json`. |
+| `format`          | string  | Output format: `pdf`, `docx`, `srt`, `md`, or `html`.         |
 | `show_timestamps` | boolean | Include start timestamps in the export.                       |
 | `show_speakers`   | boolean | Include speaker labels in the export.                         |
 
@@ -194,8 +194,7 @@ with open("transcript.pdf", "wb") as f:
 <Note>
   `show_timestamps` and `show_speakers` are still required for an `srt` export,
   but they do not change the output: `srt` is a standard format that always
-  carries timestamps and omits speaker labels. The same applies to a `json`
-  export, which returns the raw structured transcript.
+  carries timestamps and omits speaker labels.
 </Note>
 
 ## Next steps

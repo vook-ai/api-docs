@@ -174,7 +174,7 @@
             "name": "show_timestamps",
             "required": true,
             "in": "query",
-            "description": "Show start timestamps in the export. Ignored for srt (always timestamped) and json (raw).",
+            "description": "Show start timestamps in the export. Ignored for srt (always timestamped).",
             "example": true,
             "schema": {
               "type": "boolean"
@@ -184,7 +184,7 @@
             "name": "show_speakers",
             "required": true,
             "in": "query",
-            "description": "Show speaker labels in the export. Ignored for srt and json.",
+            "description": "Show speaker labels in the export. Ignored for srt.",
             "example": true,
             "schema": {
               "type": "boolean"
@@ -385,18 +385,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "The created chat, including the answer",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiChatDto"
-                }
-              }
-            }
-          },
           "201": {
-            "description": "",
+            "description": "The created chat, including the answer",
             "content": {
               "application/json": {
                 "schema": {
@@ -864,8 +854,7 @@
           "docx",
           "srt",
           "md",
-          "html",
-          "json"
+          "html"
         ]
       },
       "ApiCreateTranscriptionJobDto": {
