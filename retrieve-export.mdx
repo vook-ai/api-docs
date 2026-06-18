@@ -1,0 +1,194 @@
+---
+title: "Retrieve and export"
+description: "List your transcriptions, check status, read the transcript, and download an export."
+---
+
+Once a transcription is ready, the API lets you list what you have, check a
+transcription's status, fetch its text, and download an export. Every request
+uses your API key as a Bearer token.
+
+<Note>
+  The base URL is `https://www.api.vook.ai/api/v1`. To create a transcription
+  from your own file, see [Transcribe a file](/upload).
+</Note>
+
+## Before you start
+
+Mint an API key (see [Authentication](/authentication)) and export it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The Python examples use the `requests` package (`pip install requests`).
+
+## 1. List your transcriptions
+
+Fetch a paginated list of your transcriptions. The response includes each
+transcription's `id`, `name`, and `status`.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+import os, requests
+
+BASE = "https://www.api.vook.ai/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['VOOK_API_KEY']}"}
+
+resp = requests.get(f"{BASE}/transcriptions", headers=headers)
+resp.raise_for_status()
+for t in resp.json()["data"]:
+    print(t["id"], t["status"], t["name"])
+```
+
+</CodeGroup>
+
+The response is paginated:
+
+```json
+{
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Team weekly sync",
+      "status": "completed",
+      "language": "en",
+      "diarize": true,
+      "word_count": 1250,
+      "submitted_at": "2024-01-15T10:30:00.000Z",
+      "folder": null
+    }
+  ],
+  "totalCount": 100,
+  "currentPage": 1,
+  "lastPage": 10
+}
+```
+
+Page through results with the `page` and `page_size` query parameters, or narrow
+the list with `search`.
+
+## 2. Check a transcription's status
+
+Retrieve a single transcription by `id` to read its lifecycle `status` and
+whether its transcript is ready (`has_transcription`).
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(f"{BASE}/transcriptions/{transcription_id}", headers=headers)
+resp.raise_for_status()
+t = resp.json()
+print(t["status"], "ready:", t["has_transcription"])
+```
+
+</CodeGroup>
+
+The `status` field reflects where your transcription is in its lifecycle:
+
+| Status | Meaning |
+| --- | --- |
+| `queued` | Accepted, waiting to be processed. |
+| `processing` | Transcription is running. |
+| `completed` | Finished; the transcript is available. |
+| `empty` | Finished with **no detected speech**. |
+| `failed` | Processing failed. |
+
+## 3. Fetch the transcript
+
+Once `has_transcription` is `true`, fetch the transcript text. If the transcript
+is not ready yet, `plain_text` and `transcription` come back `null`, so check for
+a non-null value before using the response.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/transcript" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/transcriptions/{transcription_id}/transcript", headers=headers
+)
+resp.raise_for_status()
+data = resp.json()
+if data["plain_text"] is not None:
+    print(data["plain_text"])
+```
+
+</CodeGroup>
+
+```json
+{
+  "plain_text": "Hello world. This is a transcript.",
+  "word_count": 1250,
+  "transcription": [
+    {
+      "speakerKey": "SPEAKER_00",
+      "startTimeSeconds": 0,
+      "children": [
+        {
+          "text": "Hello world. This is a transcript.",
+          "startTimeSeconds": 0.8,
+          "endTimeSeconds": 3.4
+        }
+      ]
+    }
+  ]
+}
+```
+
+`plain_text` is the full transcript as a single string. `transcription` is the
+same content split into paragraphs, each with a `speakerKey` and a list of timed
+`children` text segments.
+
+## 4. Download an export
+
+Download the transcription as a ready-to-share file in the format you need. The
+endpoint returns the binary file, so write the response body to disk.
+
+The `format` query parameter is required. Supported values: `pdf`, `docx`,
+`srt`, `md`, `html`, `json`.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/export?format=pdf" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -o transcript.pdf
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/transcriptions/{transcription_id}/export",
+    headers=headers,
+    params={"format": "pdf"},
+)
+resp.raise_for_status()
+with open("transcript.pdf", "wb") as f:
+    f.write(resp.content)
+```
+
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Transcribe a file" icon="microphone" href="/upload">
+    Create a transcription from your own audio or video.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Try every endpoint interactively in the playground.
+  </Card>
+</CardGroup>

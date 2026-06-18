@@ -101,7 +101,11 @@ The fields are:
 | `chunk` | form file | The raw file bytes. |
 | `Authorization` | header | `Bearer {upload_token}`. |
 
-You can ignore the response body.
+A success returns `201` with an empty JSON body (`{}`). You can ignore it.
+
+```json
+{}
+```
 
 ## 3. Create the transcription job
 
@@ -216,8 +220,8 @@ describing the cause.
 ## 5. Read the result
 
 Each id in `transcription_ids` is a regular transcription. Read it with the
-endpoints from the [Quickstart](/quickstart): fetch its status and metadata, get
-the transcript text, or download an export.
+endpoints from [Retrieve and export](/retrieve-export): fetch its status and
+metadata, get the transcript text, or download an export.
 
 ```python Python
 for transcription_id in transcription_ids:
@@ -233,7 +237,7 @@ for transcription_id in transcription_ids:
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="bolt" href="/quickstart">
+  <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">
     Read a transcript and download an export.
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference">

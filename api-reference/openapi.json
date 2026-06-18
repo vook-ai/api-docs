@@ -189,7 +189,7 @@
     "/api/v1/transcription-jobs": {
       "post": {
         "operationId": "ApiV1TranscriptionJobsController_create",
-        "summary": "Create a transcription job from an uploaded file (call 3); returns the job id + status",
+        "summary": "Create a transcription job from an uploaded file",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -302,7 +302,7 @@
     "/api/v1/transcription-jobs/{id}": {
       "get": {
         "operationId": "ApiV1TranscriptionJobsController_getById",
-        "summary": "Get a transcription job by ID (status + transcription_ids)",
+        "summary": "Get a transcription job by ID",
         "parameters": [
           {
             "name": "id",
@@ -340,7 +340,7 @@
     "/api/v1/uploads/init": {
       "post": {
         "operationId": "UploadsController_init",
-        "summary": "Mint a scoped upload token for an ingress file upload",
+        "summary": "Mint a single-use upload token for a file",
         "parameters": [],
         "responses": {
           "200": {
@@ -377,7 +377,7 @@
   },
   "info": {
     "title": "Vook API",
-    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.\n\n## Transcribe a file (3 calls)\n\n1. **`POST /api/v1/uploads/init`** → returns an `upload_token`.\n2. **`POST {ingress}/upload`**: upload the whole file to the ingress host (`https://ingress.vook.ai`, **a different host from this API**) as `multipart/form-data` with a single `chunk` field, authenticated with `Authorization: Bearer {upload_token}`. The file is sent as a single chunk; no chunk index/count is needed. This step is on the ingress service and is not listed below.\n3. **`POST /api/v1/transcription-jobs`**: pass the `upload_token` + `file_name` + `language` + `diarize`. Returns a job `id`.\n\nThen **poll `GET /api/v1/transcription-jobs/{id}`** until `status` is `completed` (or `partial`/`failed`). Read each id in `transcription_ids` through **`GET /api/v1/transcriptions/{id}`** and its `/transcript` / `/export` sub-resources.\n\nBilling is metered per transcription and invoiced monthly; the job dispatch never fails for credit balance.",
+    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.\n\n## Transcribe a file (3 calls)\n\n1. **`POST /api/v1/uploads/init`** → returns an `upload_token`.\n2. **`POST {ingress}/upload`**: upload the whole file to the ingress host (`https://ingress.vook.ai`, **a different host from this API**) as `multipart/form-data` with a single `chunk` field, authenticated with `Authorization: Bearer {upload_token}`. The file is sent as a single chunk; no chunk index/count is needed. This step is on the ingress service and is not listed below.\n3. **`POST /api/v1/transcription-jobs`**: pass the `upload_token` + `file_name` + `language` + `diarize`. Returns a job `id`.\n\nThen **poll `GET /api/v1/transcription-jobs/{id}`** until `status` is `completed` (or `partial`/`failed`). Read each id in `transcription_ids` through **`GET /api/v1/transcriptions/{id}`** and its `/transcript` / `/export` sub-resources.",
     "version": "v1",
     "contact": {}
   },
@@ -927,7 +927,7 @@
         "properties": {
           "upload_token": {
             "type": "string",
-            "description": "Short-lived JWT scoped to this upload session. Send as `Authorization: Bearer <upload_token>` to the ingress /upload-chunk endpoint and echo it back to process-chunks.",
+            "description": "Short-lived token scoped to this upload session. Send as `Authorization: Bearer <upload_token>` to the ingress `/upload` endpoint with the file, then pass it again when you create the transcription job.",
             "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           }
         },

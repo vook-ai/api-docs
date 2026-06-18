@@ -21,6 +21,10 @@ pnpm dlx mint dev      # local preview at http://localhost:3000
 - API Reference is auto-generated from `api-reference/openapi.json` (manual
   snapshot, re-sync with `curl … /api/v1/docs-json` and re-add the `servers`
   block when the API changes).
+- **Never edit `api-reference/openapi.json` by hand.** It is a generated snapshot
+  of the NestJS Swagger output; any direct edit (descriptions, summaries, schemas)
+  is overwritten on the next re-sync. Fix the source decorators
+  (`@ApiOperation`/`@ApiProperty`) in the API repo instead, then re-sync.
 - Reference covers the read endpoints plus the upload/transcribe write flow.
   The upload step 2 hits a separate ingress host and is hand-documented in
   `upload.mdx`; new endpoints render automatically once added to the public spec.
