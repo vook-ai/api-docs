@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Vook",
+  "name": "Vook API",
   "colors": {
     "primary": "#0883C6",
     "light": "#0883C6",
@@ -15,7 +15,7 @@
   "navigation": {
     "groups": [
       {
-        "group": "Documentation",
+        "group": "Vook API",
         "pages": [
           "introduction",
           "quickstart",
