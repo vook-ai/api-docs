@@ -22,6 +22,11 @@ The Python examples use the `requests` package (`pip install requests`).
 Fetch a paginated list of your transcriptions. The response includes each
 transcription's `id`, `name`, and `status`.
 
+The list covers your whole account, including transcriptions you created in the
+Vook web app. To list only the work you submitted through the API, use
+`GET /api/v1/transcription-jobs`, which accepts the same `page` and `page_size`
+parameters and returns the same page shape.
+
 <CodeGroup>
 
 ```bash curl
@@ -59,9 +64,9 @@ The response is paginated:
       "folder": null
     }
   ],
-  "totalCount": 100,
-  "currentPage": 1,
-  "lastPage": 10
+  "total_count": 100,
+  "current_page": 1,
+  "last_page": 10
 }
 ```
 
@@ -103,8 +108,6 @@ The `status` field reflects where your transcription is in its lifecycle:
 | `completed`  | Finished; the transcript is available.                                  |
 | `empty`      | Finished with **no detected speech**.                                   |
 | `failed`     | Processing failed.                                                      |
-| `canceled`   | The transcription was canceled.                                         |
-| `locked`     | The transcript is ready and unlocks once you top up your API credits. Reads return `402` until then. |
 
 ## 3. Fetch the transcript
 
@@ -135,13 +138,13 @@ if data["plain_text"] is not None:
   "word_count": 1250,
   "transcription": [
     {
-      "speakerKey": "SPEAKER_00",
-      "startTimeSeconds": 0,
+      "speaker_key": "SPEAKER_00",
+      "start_time_seconds": 0,
       "children": [
         {
           "text": "Hello world. This is a transcript.",
-          "startTimeSeconds": 0.8,
-          "endTimeSeconds": 3.4
+          "start_time_seconds": 0.8,
+          "end_time_seconds": 3.4
         }
       ]
     }
@@ -150,8 +153,8 @@ if data["plain_text"] is not None:
 ```
 
 `plain_text` is the full transcript as a single string. `transcription` is the
-same content split into paragraphs, each with a `speakerKey` and a list of timed
-`children` text segments.
+same content split into paragraphs, each with a list of timed `children` text
+segments. `speaker_key` is present when you requested `diarize: true`.
 
 If the transcript is not ready yet, the request returns `409` with the error
 code `job_not_completed`. Wait for `has_transcription` to be `true`, then retry.

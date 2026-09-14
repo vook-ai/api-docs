@@ -630,9 +630,7 @@
           "processing",
           "completed",
           "empty",
-          "failed",
-          "canceled",
-          "locked"
+          "failed"
         ],
         "description": "Lifecycle status"
       },
@@ -729,17 +727,17 @@
               "$ref": "#/components/schemas/ApiTranscriptionListItemDto"
             }
           },
-          "totalCount": {
+          "total_count": {
             "type": "number",
             "example": 100,
             "description": "Total number of items"
           },
-          "currentPage": {
+          "current_page": {
             "type": "number",
             "example": 1,
             "description": "Current page number"
           },
-          "lastPage": {
+          "last_page": {
             "type": "number",
             "example": 10,
             "description": "Last page number"
@@ -747,9 +745,9 @@
         },
         "required": [
           "data",
-          "totalCount",
-          "currentPage",
-          "lastPage"
+          "total_count",
+          "current_page",
+          "last_page"
         ]
       },
       "ApiTranscriptionDto": {
@@ -840,15 +838,15 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "Text content of the child",
+            "description": "Text content of the segment",
             "example": "Hello world"
           },
-          "startTimeSeconds": {
+          "start_time_seconds": {
             "type": "number",
             "description": "Start time of this segment in seconds",
             "example": 1.2
           },
-          "endTimeSeconds": {
+          "end_time_seconds": {
             "type": "number",
             "description": "End time of this segment in seconds",
             "example": 3.4
@@ -873,9 +871,9 @@
             "type": "boolean",
             "description": "Highlight formatting"
           },
-          "noSpaceBefore": {
+          "no_space_before": {
             "type": "boolean",
-            "description": "Frontend concatenation hint: when true, the UI joins this child to the previous one with no space separator. Round-tripped verbatim."
+            "description": "When true, join this segment to the previous one with no space separator."
           }
         },
         "required": [
@@ -885,12 +883,12 @@
       "ApiTranscriptParagraphDto": {
         "type": "object",
         "properties": {
-          "speakerKey": {
+          "speaker_key": {
             "type": "string",
-            "description": "Speaker key (e.g. SPEAKER_00)",
+            "description": "Speaker key, present when diarization was requested",
             "example": "SPEAKER_00"
           },
-          "startTimeSeconds": {
+          "start_time_seconds": {
             "type": "number",
             "description": "Start time of the paragraph block in seconds",
             "example": 5
@@ -916,12 +914,6 @@
             "description": "Plain text version of the transcript (null when not ready)",
             "example": "Hello world. This is a transcription."
           },
-          "word_count": {
-            "type": "number",
-            "nullable": true,
-            "description": "Total word count of the transcript",
-            "example": 1250
-          },
           "transcription": {
             "nullable": true,
             "description": "Structured transcript paragraphs (null when not ready)",
@@ -929,6 +921,12 @@
             "items": {
               "$ref": "#/components/schemas/ApiTranscriptParagraphDto"
             }
+          },
+          "word_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total word count of the transcript",
+            "example": 1250
           }
         },
         "required": [
@@ -1090,17 +1088,17 @@
               "$ref": "#/components/schemas/ApiTranscriptionJobListItemDto"
             }
           },
-          "totalCount": {
+          "total_count": {
             "type": "number",
             "example": 100,
             "description": "Total number of items"
           },
-          "currentPage": {
+          "current_page": {
             "type": "number",
             "example": 1,
             "description": "Current page number"
           },
-          "lastPage": {
+          "last_page": {
             "type": "number",
             "example": 10,
             "description": "Last page number"
@@ -1108,9 +1106,9 @@
         },
         "required": [
           "data",
-          "totalCount",
-          "currentPage",
-          "lastPage"
+          "total_count",
+          "current_page",
+          "last_page"
         ]
       },
       "ApiTranscriptionJobDto": {

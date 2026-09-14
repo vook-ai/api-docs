@@ -80,6 +80,8 @@ The request body fields are:
 
 The link is checked before the job is created. If it does not point to
 reachable media, the request answers with an error code starting with `url_`.
+A `400` means you need to fix the URL; a `502` or `504` means you can retry later.
+See [Errors and limits](/errors) for each code.
 If your API credit balance needs a top-up, the request returns `402` with the
 error code `insufficient_api_credits`.
 

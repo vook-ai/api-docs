@@ -27,6 +27,12 @@ Authorization: Bearer $VOOK_API_KEY
 Keys look like `vk_live_…`. See [Authentication](/authentication) for how to
 mint and revoke them.
 
+## Conventions
+
+Every request and response field is `snake_case`, on resources, list pages,
+and error bodies alike. Timestamps are ISO 8601 strings. Failed requests share
+one error body with a stable `code`; see [Errors and limits](/errors).
+
 ## Requirements
 
 The examples in these guides use `curl` and Python. The Python snippets require

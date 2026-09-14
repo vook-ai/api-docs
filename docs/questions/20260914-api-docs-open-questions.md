@@ -3,8 +3,7 @@
 Branch `feat/api-spec-sync`. One heading per question; status emoji at the start
 of the heading is the only status. ❓ open · ✅ answered and applied · 🙅 won't do.
 
-Competitor evidence: `docs/research/20260914-competitor-docs-answers.md` (to be
-written, see `docs/handoff/20260914-competitor-docs-research.md`).
+Competitor evidence: `docs/research/20260914-competitor-docs-answers.md`.
 
 ---
 
@@ -55,7 +54,7 @@ removed from quickstart, upload, transcribe-url, retrieve-export, webhooks.
 
 ---
 
-### ❓ Q3: Webhook signature verification section
+### ✅ Q3: Webhook signature verification section
 
 **Where:** `webhooks.mdx`. Headers documented; verification recipe not.
 
@@ -72,11 +71,15 @@ today.
 - B. Ship the recipe now, marked as available once the secret is shown.
 - C. Drop signature docs; rely on polling as source of truth.
 
-**Answer:**
+**Answer:** A. Handoff: `front/docs/handoff/20260914-api-key-webhook-secret-display.md`.
+Front shows the secret once at key creation (`feat/api-key-webhook-secret`).
+"Verify the signature" in `webhooks.mdx`: HMAC steps, multi-`v1=` header
+(rotation, ADR api/0004), five-minute tolerance as example, Python helper.
+Publish after front merges.
 
 ---
 
-### ❓ Q4: Wording for `locked` transcription status
+### ✅ Q4: Wording for `locked` transcription status
 
 **Where:** `retrieve-export.mdx`, status table.
 
@@ -87,11 +90,14 @@ today.
 (transcript produced but withheld, balance exhausted when it settled). Fine to
 publish? If yes, same wording belongs in the spec description (whisper-web).
 
-**Answer:**
+**Answer:** API transcriptions are never locked; `locked` goes from the API. Row
+removed. Handoff:
+`whisper-web/docs/handoff/20260914-api-v1-drop-locked-and-canceled-status.md`.
+Re-sync spec after it merges.
 
 ---
 
-### ❓ Q5: Meaning of `canceled` transcription status
+### ✅ Q5: Meaning of `canceled` transcription status
 
 **Where:** `retrieve-export.mdx`, status table: "The transcription was
 canceled."
@@ -99,15 +105,18 @@ canceled."
 **Context:** spec gives no meaning. Unknown: who or what cancels (user action,
 credit gate, system)? Does the reader need to act?
 
-**Answer:**
+**Answer:** Unreachable. CANCELED exists only on soft-deleted rows, which reads
+filter out (404), per `api-v1.mapper.ts:54`. Row removed. Public enum flagged to
+whisper-web in the Q4 handoff.
 
 ---
 
-### ❓ Q6: Upload step 2 response (`201 {}`)
+### ✅ Q6: Upload step 2 response (`201 {}`)
 
 **Where:** `upload.mdx` step 2.
 
 **Context:** kept from the previous guide. Step 2 hits the ingress host, not in
 the spec, so not re-verified against the new API.
 
-**Answer:**
+**Answer:** Body claim dropped. Step 2 says "A `2xx` status means the file is
+stored. Continue to step 3."

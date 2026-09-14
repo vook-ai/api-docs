@@ -25,7 +25,9 @@
           },
           "webhooks",
           "retrieve-export",
-          "authentication"
+          "authentication",
+          "errors",
+          "retention"
         ]
       },
       {

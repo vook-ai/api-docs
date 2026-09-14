@@ -105,11 +105,7 @@ The fields are:
 | `chunk` | form file | The raw file bytes. |
 | `Authorization` | header | `Bearer {upload_token}`. |
 
-A success returns `201` with an empty JSON body (`{}`). You can ignore it.
-
-```json
-{}
-```
+A `2xx` status means the file is stored. Continue to step 3.
 
 ## 3. Create the transcription job
 

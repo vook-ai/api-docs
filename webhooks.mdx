@@ -68,8 +68,61 @@ The request carries these headers:
 | Header             | Description                                   |
 | ------------------ | --------------------------------------------- |
 | `Content-Type`     | `application/json`.                           |
-| `X-Vook-Signature` | Signature of the request, as `v1=<hex>`.      |
+| `X-Vook-Signature` | Signature of the request, as `v1=<hex>`. May hold several comma-separated values. |
 | `X-Vook-Timestamp` | When the request was signed, in Unix seconds. |
+
+## Verify the signature
+
+Check the signature on every request before you trust its body. It proves the
+request comes from Vook and that the body was not changed on the way.
+
+Each API key has its own **webhook signing secret**, shown once when you create
+the key (see [Authentication](/authentication#mint-a-key)). Deliveries for a job
+are signed with the secret of the key that created the job.
+
+To verify a request:
+
+1. Read the **raw request body** as bytes, before any JSON parsing. Parsing and
+   re-serializing changes the bytes and breaks the signature.
+2. Build the signed string: the `X-Vook-Timestamp` value, a period (`.`), then
+   the raw body.
+3. Compute an HMAC-SHA256 of that string, using your signing secret as the key,
+   and encode the result as lowercase hex.
+4. Split `X-Vook-Signature` on commas. Each part has the form `v1=<hex>`. Accept
+   the request if **any** `v1` value matches your result. The header can carry
+   more than one value while Vook rotates its signing keys.
+5. Compare the timestamp to your clock and reject requests older than a
+   tolerance you choose, such as five minutes. The timestamp is part of the
+   signed string, so this blocks replays of a captured request.
+
+```python Python
+import hashlib
+import hmac
+import time
+
+def verify_vook_webhook(raw_body: bytes, headers, secret: str, tolerance_s: int = 300) -> bool:
+    timestamp = headers["X-Vook-Timestamp"]
+    if abs(time.time() - int(timestamp)) > tolerance_s:
+        return False
+
+    signed = timestamp.encode() + b"." + raw_body
+    expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+
+    for part in headers["X-Vook-Signature"].split(","):
+        scheme, _, value = part.strip().partition("=")
+        if scheme == "v1" and hmac.compare_digest(value, expected):
+            return True
+    return False
+```
+
+Use a constant-time comparison such as `hmac.compare_digest`, as above. Answer
+`400` or `401` when verification fails, and do not act on the body.
+
+<Tip>
+  `POST /api/v1/webhooks/test` sends a sample signed with the same secret, so you
+  can check your verification code before you send any audio. See
+  [Test your endpoint](#test-your-endpoint).
+</Tip>
 
 ## Respond and retries
 
