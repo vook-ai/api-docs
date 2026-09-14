@@ -1,16 +1,11 @@
 ---
 title: "Retrieve and export"
-description: "List your transcriptions, check status, read the transcript, and download an export."
+description: "List your transcriptions, check status, read the transcript, download an export, and delete what you no longer need."
 ---
 
 Once a transcription is ready, the API lets you list what you have, check a
-transcription's status, fetch its text, and download an export. Every request
-uses your API key as a Bearer token.
-
-<Note>
-  The base URL is `https://www.api.vook.ai/api/v1`. To create a transcription
-  from your own file, see [Transcribe a file](/upload).
-</Note>
+transcription's status, fetch its text, download an export, and delete it.
+Every request uses your API key as a Bearer token.
 
 ## Before you start
 
@@ -70,8 +65,14 @@ The response is paginated:
 }
 ```
 
-Page through results with the `page` and `page_size` query parameters, or narrow
-the list with `search`.
+Narrow the list with these optional query parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `page` | Page number. |
+| `page_size` | Items per page. Defaults to `10`, up to `100`. |
+| `search` | Free-text search over transcription names. |
+| `in_progress` | Set to `true` to return only transcriptions still being processed. |
 
 ## 2. Check a transcription's status
 
@@ -96,19 +97,18 @@ print(t["status"], "ready:", t["has_transcription"])
 
 The `status` field reflects where your transcription is in its lifecycle:
 
-| Status       | Meaning                                |
-| ------------ | -------------------------------------- |
-| `queued`     | Accepted, waiting to be processed.     |
-| `processing` | Transcription is running.              |
-| `completed`  | Finished; the transcript is available. |
-| `empty`      | Finished with **no detected speech**.  |
-| `failed`     | Processing failed.                     |
+| Status       | Meaning                                                                 |
+| ------------ | ----------------------------------------------------------------------- |
+| `processing` | Transcription is running.                                               |
+| `completed`  | Finished; the transcript is available.                                  |
+| `empty`      | Finished with **no detected speech**.                                   |
+| `failed`     | Processing failed.                                                      |
+| `canceled`   | The transcription was canceled.                                         |
+| `locked`     | The transcript is ready and unlocks once you top up your API credits. Reads return `402` until then. |
 
 ## 3. Fetch the transcript
 
-Once `has_transcription` is `true`, fetch the transcript text. If the transcript
-is not ready yet, `plain_text` and `transcription` come back `null`, so check for
-a non-null value before using the response.
+Once `has_transcription` is `true`, fetch the transcript text.
 
 <CodeGroup>
 
@@ -153,6 +153,9 @@ if data["plain_text"] is not None:
 same content split into paragraphs, each with a `speakerKey` and a list of timed
 `children` text segments.
 
+If the transcript is not ready yet, the request returns `409` with the error
+code `job_not_completed`. Wait for `has_transcription` to be `true`, then retry.
+
 ## 4. Download an export
 
 Download the transcription as a ready-to-share file in the format you need. The
@@ -185,11 +188,22 @@ resp = requests.get(
     },
 )
 resp.raise_for_status()
-with open("transcript.pdf", "wb") as f:
-    f.write(resp.content)
+if resp.status_code == 204:
+    print("No speech detected, nothing to export.")
+else:
+    with open("transcript.pdf", "wb") as f:
+        f.write(resp.content)
 ```
 
 </CodeGroup>
+
+The export responds with:
+
+| Status | Meaning |
+| --- | --- |
+| `200` | The file, in the requested format. |
+| `204` | The audio contained no speech, so there is nothing to export. |
+| `409` | The transcript is not ready yet (`job_not_completed`). |
 
 <Note>
   `show_timestamps` and `show_speakers` are still required for an `srt` export,
@@ -197,14 +211,33 @@ with open("transcript.pdf", "wb") as f:
   carries timestamps and omits speaker labels.
 </Note>
 
+## 5. Delete a transcription
+
+Delete a transcription you no longer need by its `id`. A successful delete
+returns `204` with an empty body.
+
+<CodeGroup>
+
+```bash curl
+curl -X DELETE "https://www.api.vook.ai/api/v1/transcriptions/$ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.delete(f"{BASE}/transcriptions/{transcription_id}", headers=headers)
+resp.raise_for_status()
+```
+
+</CodeGroup>
+
+If the job that produces the transcription is still running, the request
+returns `409`. Wait for the job to finish, then retry.
+
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Transcribe a file" icon="microphone" href="/upload">
+  <Card title="Transcribe from a file" icon="microphone" href="/upload">
     Create a transcription from your own audio or video.
-  </Card>
-  <Card title="Chat with a transcript" icon="comments" href="/chat">
-    Ask questions and get answers grounded in the transcript.
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference">
     Try every endpoint interactively in the playground.

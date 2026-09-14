@@ -7,11 +7,6 @@ The Vook API turns your audio and video into transcripts and gives you the
 results back as structured text or ready-to-share files. You can run the whole
 flow with an API key alone.
 
-<Note>
-  The base URL is `https://www.api.vook.ai/api/v1`. The file upload step uses a
-  separate host, documented in [Transcribe a file](/upload).
-</Note>
-
 ## The path
 
 There are two stages: send a file for transcription, then read the result.
@@ -25,14 +20,15 @@ There are two stages: send a file for transcription, then read the result.
     export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     ```
   </Step>
-  <Step title="Transcribe a file">
-    Mint an upload token, send the file, then start a transcription job and poll
-    it until the transcript is ready. Full walkthrough in
-    [Transcribe a file](/upload).
+  <Step title="Transcribe">
+    Upload a file or pass a direct link to one, start a transcription job, then
+    poll it or receive a [webhook](/webhooks) when the transcript is ready. Full
+    walkthroughs in [Transcribe from a file](/upload) and
+    [Transcribe from a URL](/transcribe-url).
   </Step>
   <Step title="Retrieve and export">
-    List your transcriptions, check status, read the transcript text, and
-    download an export. Full walkthrough in
+    List your transcriptions, check status, read the transcript text, download
+    an export, and delete what you no longer need. Full walkthrough in
     [Retrieve and export](/retrieve-export).
   </Step>
 </Steps>
@@ -40,7 +36,7 @@ There are two stages: send a file for transcription, then read the result.
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Transcribe a file" icon="microphone" href="/upload">
+  <Card title="Transcribe from a file" icon="microphone" href="/upload">
     Create a transcription from your own audio or video.
   </Card>
   <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">
