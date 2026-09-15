@@ -19,9 +19,11 @@
             "name": "page_size",
             "required": false,
             "in": "query",
-            "description": "Number of items per page. Defaults to 10, and a value above 100 returns 100 items so a single request stays fast for everyone.",
+            "description": "Number of items per page. Defaults to 10, up to 100.",
             "schema": {
+              "minimum": 1,
               "maximum": 100,
+              "pattern": "^(100|[1-9]\\d?)$",
               "example": "10",
               "type": "string"
             }
@@ -304,9 +306,11 @@
             "name": "page_size",
             "required": false,
             "in": "query",
-            "description": "Number of items per page. Defaults to 10, and a value above 100 returns 100 items so a single request stays fast for everyone.",
+            "description": "Number of items per page. Defaults to 10, up to 100.",
             "schema": {
+              "minimum": 1,
               "maximum": 100,
+              "pattern": "^(100|[1-9]\\d?)$",
               "example": "10",
               "type": "string"
             }

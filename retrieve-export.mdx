@@ -94,7 +94,7 @@ Narrow the list with these optional query parameters:
 | Parameter | Description |
 | --- | --- |
 | `page` | Page number. |
-| `page_size` | Items per page. Defaults to `10`, up to `100`. |
+| `page_size` | Items per page, a whole number from `1` to `100`. Defaults to `10`. Any other value returns `400 invalid_request`. |
 | `search` | Free-text search over transcription names. |
 | `in_progress` | Set to `true` to return only transcriptions still being processed. |
 
