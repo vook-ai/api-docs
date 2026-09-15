@@ -77,7 +77,7 @@ The request body fields are:
 | Field | Required | Description |
 | --- | --- | --- |
 | `url` | yes | Direct https link to an audio or video file, up to 2048 characters. |
-| `language` | yes | Spoken language code, for example `en`. |
+| `language` | yes | Spoken language code, for example `en` or `fr`. Send `auto` to detect it; the transcription then reports the detected code. |
 | `diarize` | yes | Set `true` to separate speakers. |
 | `file_name` | no | Original file name. |
 | `name` | no | Display name for the resulting transcription. Defaults to `file_name`, then to the last segment of the `url` path (for example `meeting.mp3`). |

@@ -166,7 +166,7 @@ The request body fields are:
 | --- | --- | --- |
 | `upload_token` | yes | The token from step 1. |
 | `file_name` | yes | The original file name. |
-| `language` | yes | Spoken language code, for example `en`. |
+| `language` | yes | Spoken language code, for example `en` or `fr`. Send `auto` to detect it; the transcription then reports the detected code. |
 | `diarize` | yes | Set `true` to separate speakers. |
 | `name` | no | Display name for the resulting transcription. Defaults to `file_name`. |
 | `callback_url` | no | Endpoint to notify when the job finishes. See [Webhooks](/webhooks). |
@@ -220,7 +220,7 @@ while True:
 | `id` | string | Transcription job ID. |
 | `status` | string | Job lifecycle status. See the table below. |
 | `name` | string or `null` | Display name for the job. |
-| `language` | string | Spoken language code. |
+| `language` | string | Language code as you sent it. Reads `auto` when you asked for detection; the transcription carries the detected code. |
 | `diarize` | boolean | Whether you requested speaker separation. |
 | `transcription_id` | string or `null` | The transcription this job produced. `null` until the job reaches `processing`. |
 | `callback_url` | string or `null` | The webhook endpoint you submitted, or `null` when the job was created without one. |
@@ -270,24 +270,12 @@ print(resp.json()["plain_text"])
         {
           "text": "Hello world.",
           "start_time_seconds": 0.8,
-          "end_time_seconds": 1.9,
-          "bold": false,
-          "italic": false,
-          "underline": false,
-          "strikethrough": false,
-          "highlight": false,
-          "no_space_before": false
+          "end_time_seconds": 1.9
         },
         {
           "text": "This is a transcript.",
           "start_time_seconds": 2.1,
-          "end_time_seconds": 3.4,
-          "bold": false,
-          "italic": false,
-          "underline": false,
-          "strikethrough": false,
-          "highlight": false,
-          "no_space_before": false
+          "end_time_seconds": 3.4
         }
       ]
     }
@@ -306,12 +294,6 @@ print(resp.json()["plain_text"])
 | `transcription[].children[].text` | string | Text of the segment. |
 | `transcription[].children[].start_time_seconds` | number | When the segment starts, in seconds. |
 | `transcription[].children[].end_time_seconds` | number | When the segment ends, in seconds. |
-| `transcription[].children[].bold` | boolean | Whether the segment is bold. |
-| `transcription[].children[].italic` | boolean | Whether the segment is italic. |
-| `transcription[].children[].underline` | boolean | Whether the segment is underlined. |
-| `transcription[].children[].strikethrough` | boolean | Whether the segment is struck through. |
-| `transcription[].children[].highlight` | boolean | Whether the segment is highlighted. |
-| `transcription[].children[].no_space_before` | boolean | When `true`, join this segment to the previous one without a space. |
 
 The job also has an export endpoint,
 `GET /api/v1/transcription-jobs/{id}/export`, which takes the same query

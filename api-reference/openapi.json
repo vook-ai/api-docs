@@ -899,7 +899,7 @@
           "language": {
             "type": "string",
             "nullable": true,
-            "description": "Spoken language code, when known",
+            "description": "Spoken language code, when known. With 'auto', reads 'auto' until processing ends, then the detected code.",
             "example": "en"
           },
           "diarize": {
@@ -996,7 +996,7 @@
           "language": {
             "type": "string",
             "nullable": true,
-            "description": "Spoken language code, when known",
+            "description": "Spoken language code, when known. With 'auto', reads 'auto' until processing ends, then the detected code.",
             "example": "en"
           },
           "has_transcription": {
@@ -1071,30 +1071,6 @@
             "type": "number",
             "description": "End time of this segment in seconds",
             "example": 3.4
-          },
-          "bold": {
-            "type": "boolean",
-            "description": "Bold formatting"
-          },
-          "italic": {
-            "type": "boolean",
-            "description": "Italic formatting"
-          },
-          "underline": {
-            "type": "boolean",
-            "description": "Underline formatting"
-          },
-          "strikethrough": {
-            "type": "boolean",
-            "description": "Strikethrough formatting"
-          },
-          "highlight": {
-            "type": "boolean",
-            "description": "Highlight formatting"
-          },
-          "no_space_before": {
-            "type": "boolean",
-            "description": "When true, join this segment to the previous one with no space separator."
           }
         },
         "required": [
@@ -1185,8 +1161,8 @@
           },
           "language": {
             "type": "string",
-            "description": "Spoken language code",
-            "example": "en"
+            "description": "Spoken language code, such as 'en' or 'fr'. Send 'auto' to let us detect it; the transcription then reports the detected code.",
+            "example": "auto"
           },
           "diarize": {
             "type": "boolean",
@@ -1269,8 +1245,8 @@
           },
           "language": {
             "type": "string",
-            "description": "Spoken language code",
-            "example": "en"
+            "description": "Language code as requested. Reads 'auto' when detection was requested; the transcription carries the detected code.",
+            "example": "auto"
           },
           "diarize": {
             "type": "boolean",
@@ -1357,8 +1333,8 @@
           },
           "language": {
             "type": "string",
-            "description": "Spoken language code",
-            "example": "en"
+            "description": "Language code as requested. Reads 'auto' when detection was requested; the transcription carries the detected code.",
+            "example": "auto"
           },
           "diarize": {
             "type": "boolean",
