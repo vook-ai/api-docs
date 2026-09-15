@@ -36,7 +36,8 @@ Any non-`2xx` response on `/api/v1` returns this object:
 The status tells you what to do next:
 
 - **`4xx`**: the request will not succeed as sent. Change the request before
-  you send it again.
+  you send it again. One exception: `409 chat_turn_in_progress` succeeds once
+  the current answer on that chat is ready.
 - **`429`**: the request is valid and the timing is not. Wait for the number of
   seconds in the `Retry-After` header, then retry.
 - **`5xx`**: the same request may succeed later. Retry with exponential backoff.
@@ -49,12 +50,15 @@ The status tells you what to do next:
 | `invalid_callback_url` | `400` | `callback_url` is not public https on a standard port. See [Webhooks](/webhooks). |
 | `url_not_supported` | `400` | The source `url` is not https, or uses a non-standard port. Fix the URL. |
 | `url_not_media` | `400` | The source `url` answered, but it is not audio or video (for example a web page). Send a direct link to the media file. |
-| `url_not_accessible` | `400` | The source `url` answered with a `4xx` (for example a typo, a private file, or an expired signed URL). Fix the URL. |
+| `url_not_accessible` | `400` | The source `url` cannot be fetched: it answered with a `4xx` (for example a typo, a private file, or an expired signed URL), or it points to a private or local address. Send a link that is reachable from the internet. |
 | `unauthorized` | `401`, `403` | The API key is missing, invalid, revoked, or expired. See [Authentication](/authentication). |
-| `insufficient_api_credits` | `402` | Your API credit balance needs a top-up. Top up, then send the request again. |
+| `insufficient_api_credits` | `402` | Your account has no credit left for this request. Top up, then send the request again. |
+| `chat_not_enabled` | `403` | [Chat](/chat) is in beta and not enabled for your account. Returned by every chat endpoint. |
 | `not_found` | `404` | The resource does not exist, or it was deleted. |
 | `job_not_completed` | `409` | The transcript does not exist yet. Poll the job until it is `completed`, then retry. |
 | `job_failed` | `409` | The job failed, so it has no transcript. Read the job's `error_code` to see why. |
+| `chat_turn_in_progress` | `409` | Another prompt on this chat is still being answered. Wait until the chat's `turn_in_progress` is `false`, then retry. |
+| `chat_token_limit_reached` | `409` | The chat reached its length limit. Open a new chat to continue. |
 | `too_many_unsettled_jobs` | `429` | You reached the limit of unfinished jobs. Retry after `Retry-After` seconds. |
 | `url_unreachable` | `502` | The source `url` could not be reached, or its server answered with a `5xx`. Retry later. |
 | `url_probe_timeout` | `504` | The source `url` did not answer in time. Retry later. |
@@ -76,7 +80,7 @@ turns out to be too long. In that case the job reaches `failed` and its
 | `url_not_media` | The downloaded file is not audio or video. |
 | `url_not_accessible` | The source `url` refused the download. |
 | `url_unreachable` | The download failed or did not finish in time. Submit the job again. |
-| `insufficient_api_credits` | Your API credit balance needed a top-up before the job could start. |
+| `insufficient_api_credits` | Your account had no credit left when the job was due to start. |
 | `audio_processing_failed` | The file could not be read as audio. Check the file and submit it again. |
 | `transcription_failed` | Transcription did not complete. Submit the job again. |
 | `diarization_failed` | Speaker identification did not complete. Submit the job again. |
@@ -98,6 +102,12 @@ These limits apply to every submission, whether you upload a file or send a URL.
 A job counts as unfinished while its status is `queued` or `processing`. The
 limit applies across all of your API keys. Each job that reaches `completed` or
 `failed` frees a slot.
+
+[Chat](/chat) has its own limit:
+
+| Limit | Value | What happens above it |
+| --- | --- | --- |
+| Chat length | 2,000,000 tokens per chat | New prompts return `409 chat_token_limit_reached`. Open a new chat. |
 
 ## Next steps
 

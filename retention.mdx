@@ -12,6 +12,7 @@ submit through the API until you delete them, so you decide when they go.
 | --- | --- |
 | Working audio used during processing | Deleted automatically after **1 day**. |
 | Your audio and transcripts | Kept until **you delete them**. |
+| Chats on a transcription | Kept as long as the transcription. Deleted **with it**. |
 | Everything in a deleted account | Deleted within **30 days** of the account deletion. |
 | Everything in an inactive account | Deleted after **two years** without activity. You receive notices 30 days and 7 days before, followed by a 30-day grace period. |
 
@@ -20,7 +21,8 @@ one, delete transcriptions on your schedule with the endpoint below.
 
 ## Delete a transcription
 
-`DELETE /api/v1/transcriptions/{id}` deletes a transcription and its audio.
+`DELETE /api/v1/transcriptions/{id}` deletes a transcription, its audio, and
+its [chats](/chat).
 
 ```bash
 curl -X DELETE "https://www.api.vook.ai/api/v1/transcriptions/$ID" \
@@ -33,7 +35,8 @@ curl -X DELETE "https://www.api.vook.ai/api/v1/transcriptions/$ID" \
   the same.
 - While the job is still running, the request returns `409` with the code
   `job_not_completed`. Wait for the job to finish, then retry.
-- After the delete, transcript reads return `404`. The job itself stays readable
+- After the delete, reading the transcription, its transcript, its export, or its
+  chats returns `404`. The job itself stays readable
   with `GET /api/v1/transcription-jobs/{id}`.
 
 See [Retrieve and export](/retrieve-export#5-delete-a-transcription) for Python

@@ -25,6 +25,7 @@
           },
           "webhooks",
           "retrieve-export",
+          "chat",
           "authentication",
           "errors",
           "retention"

@@ -532,6 +532,227 @@
         ]
       }
     },
+    "/api/v1/transcriptions/{id}/chats": {
+      "post": {
+        "description": "You ask a question about a transcript and get the answer in the same response. The chat is saved, so you can add follow-up prompts to it. The transcript enters the chat when it opens: later edits to the transcript do not reach it. This endpoint is in beta and may change.",
+        "operationId": "ApiV1LlmChatController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiCreateChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The chat, with your prompt and its answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a chat over a transcript and answer its first prompt",
+        "tags": [
+          "Chats (API v1, beta)"
+        ]
+      },
+      "get": {
+        "description": "You get every chat of the transcription, including chats opened in the web app. Messages are read per chat. This endpoint is in beta and may change.",
+        "operationId": "ApiV1LlmChatController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chats of the transcription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatListDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the chats of a transcription",
+        "tags": [
+          "Chats (API v1, beta)"
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/chats/{chat_id}/messages": {
+      "post": {
+        "description": "You continue a chat, including one opened in the web app, and get the answer in the same response. If your connection drops, the answer is still saved: get the chat until turn_in_progress is false. A chat holds up to 2,000,000 tokens. This endpoint is in beta and may change.",
+        "operationId": "ApiV1LlmChatController_addMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "chat_id",
+            "required": true,
+            "in": "path",
+            "description": "Chat ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiChatMessageCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The chat, with your prompt and its answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
+          },
+          "409": {
+            "description": "Another message on this chat is still being answered (error code: chat_turn_in_progress), or the chat has reached its limit of 2,000,000 tokens (error code: chat_token_limit_reached). Open a new chat to continue after the limit."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a prompt to a chat and get its answer",
+        "tags": [
+          "Chats (API v1, beta)"
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/chats/{chat_id}": {
+      "get": {
+        "description": "You read every prompt and answer of a chat. This endpoint is in beta and may change.",
+        "operationId": "ApiV1LlmChatController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "chat_id",
+            "required": true,
+            "in": "path",
+            "description": "Chat ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The chat with its messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a chat with its messages",
+        "tags": [
+          "Chats (API v1, beta)"
+        ]
+      }
+    },
     "/api/v1/webhooks/test": {
       "post": {
         "description": "Runs the same validation as job submit, then delivers a signed sample `transcription_job.resolved` payload and returns the outcome. It starts no work and costs nothing, so you can verify your signature check before you send audio.",
@@ -1182,6 +1403,173 @@
           "diarize",
           "created_at",
           "updated_at"
+        ]
+      },
+      "ApiCreateChatDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Short label for the chat, shown when you list chats",
+            "example": "Action items"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Question or instruction to run against the transcript",
+            "example": "List the action items decided in this meeting."
+          }
+        },
+        "required": [
+          "title",
+          "prompt"
+        ]
+      },
+      "ApiChatMessageRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "assistant"
+        ],
+        "description": "Who wrote the message"
+      },
+      "ApiChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "description": "Who wrote the message",
+            "example": "user",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiChatMessageRole"
+              }
+            ]
+          },
+          "content": {
+            "type": "string",
+            "description": "Message text",
+            "example": "List the action items decided in this meeting."
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the message was written",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "role",
+          "content",
+          "created_at"
+        ]
+      },
+      "ApiChatDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Chat ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "transcription_id": {
+            "type": "string",
+            "description": "ID of the transcription this chat runs against",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "description": "Label given to the chat",
+            "example": "Action items"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the chat was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "messages": {
+            "description": "Prompts and answers, oldest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiChatMessageDto"
+            }
+          },
+          "turn_in_progress": {
+            "type": "boolean",
+            "description": "True while a message on this chat is being answered. Poll the chat until it is false: your prompt and its answer in messages means the turn completed.",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "transcription_id",
+          "title",
+          "created_at",
+          "messages",
+          "turn_in_progress"
+        ]
+      },
+      "ApiChatMessageCreateDto": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Question or instruction to run against the transcript",
+            "example": "List the action items decided in this meeting."
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "ApiChatListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Chat ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "transcription_id": {
+            "type": "string",
+            "description": "ID of the transcription this chat runs against",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "description": "Label given to the chat",
+            "example": "Action items"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the chat was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "transcription_id",
+          "title",
+          "created_at"
+        ]
+      },
+      "ApiChatListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Chats for the transcription, including chats opened in the web app",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiChatListItemDto"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "ApiWebhookTestDto": {

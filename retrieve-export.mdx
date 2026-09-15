@@ -24,8 +24,9 @@ transcription's `id`, `name`, and `status`.
 
 The list covers your whole account, including transcriptions you created in the
 Vook web app. To list only the work you submitted through the API, use
-`GET /api/v1/transcription-jobs`, which accepts the same `page` and `page_size`
-parameters and returns the same page shape.
+`GET /api/v1/transcription-jobs`. It accepts the same query parameters and
+returns the same pagination fields, with job items instead of transcriptions.
+See the [API Reference](/api-reference) for the item fields.
 
 <CodeGroup>
 
@@ -61,7 +62,10 @@ The response is paginated:
       "diarize": true,
       "word_count": 1250,
       "submitted_at": "2024-01-15T10:30:00.000Z",
-      "folder": null
+      "folder": {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Client calls"
+      }
     }
   ],
   "total_count": 100,
@@ -69,6 +73,21 @@ The response is paginated:
   "last_page": 10
 }
 ```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `data` | object[] | The transcriptions on this page. |
+| `data[].id` | string | Transcription ID. |
+| `data[].name` | string | Display name. |
+| `data[].status` | string | Lifecycle status. See [Check a transcription's status](#2-check-a-transcriptions-status). |
+| `data[].language` | string or `null` | Spoken language code, when known. |
+| `data[].diarize` | boolean | Whether you requested speaker separation. |
+| `data[].word_count` | number or `null` | Total word count, when available. |
+| `data[].submitted_at` | string or `null` | When the transcription was submitted, as an ISO 8601 timestamp. |
+| `data[].folder` | object or `null` | The folder the transcription belongs to, with its `id` and `name`, or `null`. |
+| `total_count` | number | Total number of transcriptions across all pages. |
+| `current_page` | number | The page returned. |
+| `last_page` | number | The last page number. |
 
 Narrow the list with these optional query parameters:
 
@@ -99,6 +118,39 @@ print(t["status"], "ready:", t["has_transcription"])
 ```
 
 </CodeGroup>
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "name": "Team weekly sync",
+  "status": "completed",
+  "language": "en",
+  "has_transcription": true,
+  "diarize": true,
+  "speaker_count": 2,
+  "word_count": 1250,
+  "submitted_at": "2024-01-15T10:30:00.000Z",
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "folder": {
+    "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "name": "Client calls"
+  }
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Transcription ID. |
+| `name` | string | Display name. |
+| `status` | string | Lifecycle status. See the table below. |
+| `language` | string or `null` | Spoken language code, when known. |
+| `has_transcription` | boolean | `true` once the transcript is available to fetch and export. |
+| `diarize` | boolean | Whether you requested speaker separation. |
+| `speaker_count` | number or `null` | Number of detected speakers, when diarized. |
+| `word_count` | number or `null` | Total word count, when available. |
+| `submitted_at` | string or `null` | When the transcription was submitted, as an ISO 8601 timestamp. |
+| `created_at` | string | When the transcription was created, as an ISO 8601 timestamp. |
+| `folder` | object or `null` | The folder the transcription belongs to, with its `id` and `name`, or `null`. |
 
 The `status` field reflects where your transcription is in its lifecycle:
 
@@ -142,9 +194,26 @@ if data["plain_text"] is not None:
       "start_time_seconds": 0,
       "children": [
         {
-          "text": "Hello world. This is a transcript.",
+          "text": "Hello world.",
           "start_time_seconds": 0.8,
-          "end_time_seconds": 3.4
+          "end_time_seconds": 1.9,
+          "bold": false,
+          "italic": false,
+          "underline": false,
+          "strikethrough": false,
+          "highlight": false,
+          "no_space_before": false
+        },
+        {
+          "text": "This is a transcript.",
+          "start_time_seconds": 2.1,
+          "end_time_seconds": 3.4,
+          "bold": false,
+          "italic": false,
+          "underline": false,
+          "strikethrough": false,
+          "highlight": false,
+          "no_space_before": false
         }
       ]
     }
@@ -152,17 +221,36 @@ if data["plain_text"] is not None:
 }
 ```
 
-`plain_text` is the full transcript as a single string. `transcription` is the
-same content split into paragraphs, each with a list of timed `children` text
-segments. `speaker_key` is present when you requested `diarize: true`.
+| Field | Type | Description |
+| --- | --- | --- |
+| `plain_text` | string or `null` | The full transcript as a single string. `null` on a transcription with no speech. |
+| `word_count` | number or `null` | Total word count of the transcript, when available. |
+| `transcription` | object[] or `null` | The same content split into paragraphs. `null` on a transcription with no speech. |
+| `transcription[].speaker_key` | string | Speaker of the paragraph. Present when you requested `diarize: true`. |
+| `transcription[].start_time_seconds` | number | When the paragraph starts, in seconds. |
+| `transcription[].children` | object[] | The paragraph's timed text segments. |
+| `transcription[].children[].text` | string | Text of the segment. |
+| `transcription[].children[].start_time_seconds` | number | When the segment starts, in seconds. |
+| `transcription[].children[].end_time_seconds` | number | When the segment ends, in seconds. |
+| `transcription[].children[].bold` | boolean | Whether the segment is bold. |
+| `transcription[].children[].italic` | boolean | Whether the segment is italic. |
+| `transcription[].children[].underline` | boolean | Whether the segment is underlined. |
+| `transcription[].children[].strikethrough` | boolean | Whether the segment is struck through. |
+| `transcription[].children[].highlight` | boolean | Whether the segment is highlighted. |
+| `transcription[].children[].no_space_before` | boolean | When `true`, join this segment to the previous one without a space. |
 
 If the transcript is not ready yet, the request returns `409` with the error
 code `job_not_completed`. Wait for `has_transcription` to be `true`, then retry.
 
+On a transcription with no speech (`status` `empty`), the request returns `200`
+with `plain_text` set to `null`.
+
 ## 4. Download an export
 
 Download the transcription as a ready-to-share file in the format you need. The
-endpoint returns the binary file, so write the response body to disk.
+endpoint returns the binary file, so write the response body to disk. Save the
+file with the extension of the format you requested. `srt` exports come back as
+`text/plain`.
 
 Three query parameters are required:
 

@@ -178,12 +178,12 @@ print(resp.json())
 }
 ```
 
-| Field         | Description                                                                      |
-| ------------- | -------------------------------------------------------------------------------- |
-| `delivered`   | `true` when your endpoint answered with a `2xx` status.                          |
-| `status_code` | HTTP status your endpoint answered, or `null` if the request could not reach it. |
-| `duration_ms` | Round-trip time in milliseconds.                                                 |
-| `error`       | Why the request could not reach your endpoint, or `null` when it answered.       |
+| Field | Type | Description |
+| --- | --- | --- |
+| `delivered` | boolean | `true` when your endpoint answered with a `2xx` status. |
+| `status_code` | number or `null` | HTTP status your endpoint answered, or `null` if the request could not reach it. |
+| `duration_ms` | number | Round-trip time in milliseconds. |
+| `error` | string or `null` | Why the request could not reach your endpoint, or `null` when it answered. |
 
 A `callback_url` that is not public https on a standard port returns `400` with
 the error code `invalid_callback_url`.

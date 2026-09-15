@@ -67,6 +67,11 @@ job_id = resp.json()["id"]
 }
 ```
 
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Transcription job ID. Use it to follow the job. |
+| `status` | string | Job lifecycle status. See [Poll the job](/upload#4-poll-the-job). |
+
 The request body fields are:
 
 | Field | Required | Description |
@@ -75,14 +80,14 @@ The request body fields are:
 | `language` | yes | Spoken language code, for example `en`. |
 | `diarize` | yes | Set `true` to separate speakers. |
 | `file_name` | no | Original file name. |
-| `name` | no | Display name for the resulting transcription. |
+| `name` | no | Display name for the resulting transcription. Defaults to `file_name`, then to the last segment of the `url` path (for example `meeting.mp3`). |
 | `callback_url` | no | Endpoint to notify when the job finishes. See [Webhooks](/webhooks). |
 
 The link is checked before the job is created. If it does not point to
 reachable media, the request answers with an error code starting with `url_`.
 A `400` means you need to fix the URL; a `502` or `504` means you can retry later.
 See [Errors and limits](/errors) for each code.
-If your API credit balance needs a top-up, the request returns `402` with the
+If your account has no credit left for this request, it returns `402` with the
 error code `insufficient_api_credits`.
 
 ## 2. Follow the job and read the result

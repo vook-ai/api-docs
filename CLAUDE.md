@@ -48,3 +48,8 @@ include: document the observable contract (endpoints, fields, status, what to do
 when a value is `null`), not internal mechanics ("computed lazily", queues,
 infra). Litmus test: does the reader need it to make a correct request or handle
 the response?
+
+Follow `.claude/rules/003-full-responses.md`: every guide shows the **full**
+response of each endpoint it calls (complete example JSON plus a field table),
+mirroring the API Reference page. Fields and nullability come from
+`api-reference/openapi.json`.
