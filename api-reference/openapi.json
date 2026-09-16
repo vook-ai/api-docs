@@ -883,7 +883,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Transcription (prediction) ID",
+            "description": "Transcription ID",
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           "name": {
@@ -980,7 +980,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Transcription (prediction) ID",
+            "description": "Transcription ID",
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           "name": {
@@ -1112,12 +1112,12 @@
           "plain_text": {
             "type": "string",
             "nullable": true,
-            "description": "Plain text version of the transcript (null when not ready)",
+            "description": "Plain text version of the transcript. Null on a transcription with no detected speech.",
             "example": "Hello world. This is a transcription."
           },
           "transcription": {
             "nullable": true,
-            "description": "Structured transcript paragraphs (null when not ready)",
+            "description": "Structured transcript paragraphs. Null on a transcription with no detected speech.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ApiTranscriptParagraphDto"
@@ -1126,7 +1126,7 @@
           "word_count": {
             "type": "number",
             "nullable": true,
-            "description": "Total word count of the transcript",
+            "description": "Total word count of the transcript. Null when not computed, always on a transcription with no detected speech.",
             "example": 1250
           }
         },
