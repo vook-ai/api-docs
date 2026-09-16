@@ -1,0 +1,5 @@
+# Internal files: never published on docs.vook.ai.
+CLAUDE.md
+docs/
+prompts/
+tmp/

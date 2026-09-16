@@ -4,15 +4,14 @@
     "/api/v1/transcriptions": {
       "get": {
         "operationId": "ApiV1TranscriptionsController_list",
-        "summary": "List the API key owner's transcriptions",
         "parameters": [
           {
             "name": "page",
             "required": false,
             "in": "query",
             "description": "Page number",
-            "example": "1",
             "schema": {
+              "example": "1",
               "type": "string"
             }
           },
@@ -20,9 +19,12 @@
             "name": "page_size",
             "required": false,
             "in": "query",
-            "description": "Number of items per page",
-            "example": "10",
+            "description": "Number of items per page. Defaults to 10, up to 100.",
             "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "pattern": "^(100|[1-9]\\d?)$",
+              "example": "10",
               "type": "string"
             }
           },
@@ -31,8 +33,8 @@
             "required": false,
             "in": "query",
             "description": "Free-text search over transcription names",
-            "example": "weekly sync",
             "schema": {
+              "example": "weekly sync",
               "type": "string"
             }
           },
@@ -41,8 +43,8 @@
             "required": false,
             "in": "query",
             "description": "Set to \"true\" to only return transcriptions still being processed",
-            "example": "true",
             "schema": {
+              "example": "true",
               "type": "string"
             }
           }
@@ -59,28 +61,28 @@
             }
           }
         },
-        "tags": [
-          "Transcriptions (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List the API key owner's transcriptions",
+        "tags": [
+          "Transcriptions (API v1)"
         ]
       }
     },
     "/api/v1/transcriptions/{id}": {
       "get": {
         "operationId": "ApiV1TranscriptionsController_getById",
-        "summary": "Get a transcription by ID",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           }
@@ -97,35 +99,67 @@
             }
           }
         },
-        "tags": [
-          "Transcriptions (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get a transcription by ID",
+        "tags": [
+          "Transcriptions (API v1)"
         ]
-      }
-    },
-    "/api/v1/transcriptions/{id}/transcript": {
-      "get": {
-        "operationId": "ApiV1TranscriptionsController_getTranscript",
-        "summary": "Get the transcript text for a transcription",
+      },
+      "delete": {
+        "operationId": "ApiV1TranscriptionsController_delete",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The transcription was deleted"
+          },
+          "409": {
+            "description": "The transcription job is still running"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a transcription",
+        "tags": [
+          "Transcriptions (API v1)"
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/transcript": {
+      "get": {
+        "operationId": "ApiV1TranscriptionsController_getTranscript",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Transcript paragraphs + plain text (null fields when not ready)",
+            "description": "Transcript paragraphs + plain text",
             "content": {
               "application/json": {
                 "schema": {
@@ -133,30 +167,33 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The transcript is not ready yet (error code: job_not_completed)"
           }
         },
-        "tags": [
-          "Transcriptions (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get the transcript text for a transcription",
+        "tags": [
+          "Transcriptions (API v1)"
         ]
       }
     },
     "/api/v1/transcriptions/{id}/export": {
       "get": {
         "operationId": "ApiV1TranscriptionsController_export",
-        "summary": "Export a transcription in the requested format",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           },
@@ -165,7 +202,6 @@
             "required": true,
             "in": "query",
             "description": "Export format",
-            "example": "pdf",
             "schema": {
               "$ref": "#/components/schemas/ApiExportFormat"
             }
@@ -175,8 +211,8 @@
             "required": true,
             "in": "query",
             "description": "Show start timestamps in the export. Ignored for srt (always timestamped).",
-            "example": true,
             "schema": {
+              "example": true,
               "type": "boolean"
             }
           },
@@ -185,8 +221,8 @@
             "required": true,
             "in": "query",
             "description": "Show speaker labels in the export. Ignored for srt.",
-            "example": true,
             "schema": {
+              "example": true,
               "type": "boolean"
             }
           }
@@ -194,22 +230,29 @@
         "responses": {
           "200": {
             "description": "Exported file in the requested format"
+          },
+          "204": {
+            "description": "The audio contained no speech: nothing to export"
+          },
+          "409": {
+            "description": "The transcript is not ready yet (error code: job_not_completed)"
           }
         },
-        "tags": [
-          "Transcriptions (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Export a transcription in the requested format",
+        "tags": [
+          "Transcriptions (API v1)"
         ]
       }
     },
     "/api/v1/transcription-jobs": {
       "post": {
+        "description": "Send an upload_token from POST /api/v1/uploads/init, or a direct https url to a media file. A url is checked before the job is created: a link that is not reachable media answers with a url_* error code.",
         "operationId": "ApiV1TranscriptionJobsController_create",
-        "summary": "Create a transcription job from an uploaded file",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -222,7 +265,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Transcription job created",
             "content": {
               "application/json": {
@@ -232,37 +275,30 @@
               }
             }
           },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiCreateTranscriptionJobResponseDto"
-                }
-              }
-            }
+          "402": {
+            "description": "Your API credit balance is empty (error code: insufficient_api_credits). Top up to dispatch new jobs."
           }
         },
-        "tags": [
-          "Transcription jobs (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Create a transcription job from an uploaded file or a URL",
+        "tags": [
+          "Transcription jobs (API v1)"
         ]
       },
       "get": {
         "operationId": "ApiV1TranscriptionJobsController_list",
-        "summary": "List the API key owner's transcription jobs",
         "parameters": [
           {
             "name": "page",
             "required": false,
             "in": "query",
             "description": "Page number",
-            "example": "1",
             "schema": {
+              "example": "1",
               "type": "string"
             }
           },
@@ -270,9 +306,12 @@
             "name": "page_size",
             "required": false,
             "in": "query",
-            "description": "Number of items per page",
-            "example": "10",
+            "description": "Number of items per page. Defaults to 10, up to 100.",
             "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "pattern": "^(100|[1-9]\\d?)$",
+              "example": "10",
               "type": "string"
             }
           },
@@ -281,8 +320,8 @@
             "required": false,
             "in": "query",
             "description": "Free-text search over transcription names",
-            "example": "weekly sync",
             "schema": {
+              "example": "weekly sync",
               "type": "string"
             }
           },
@@ -291,8 +330,8 @@
             "required": false,
             "in": "query",
             "description": "Set to \"true\" to only return transcriptions still being processed",
-            "example": "true",
             "schema": {
+              "example": "true",
               "type": "string"
             }
           }
@@ -309,28 +348,28 @@
             }
           }
         },
-        "tags": [
-          "Transcription jobs (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List the API key owner's transcription jobs",
+        "tags": [
+          "Transcription jobs (API v1)"
         ]
       }
     },
     "/api/v1/transcription-jobs/{id}": {
       "get": {
         "operationId": "ApiV1TranscriptionJobsController_getById",
-        "summary": "Get a transcription job by ID",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription job ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           }
@@ -347,29 +386,168 @@
             }
           }
         },
-        "tags": [
-          "Transcription jobs (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Get a transcription job by ID",
+        "tags": [
+          "Transcription jobs (API v1)"
+        ]
+      },
+      "delete": {
+        "operationId": "ApiV1TranscriptionJobsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription job ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The transcription was deleted, or the job carries none to delete"
+          },
+          "409": {
+            "description": "The transcription job is still running"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the transcription a transcription job produced",
+        "tags": [
+          "Transcription jobs (API v1)"
+        ]
+      }
+    },
+    "/api/v1/transcription-jobs/{id}/transcript": {
+      "get": {
+        "operationId": "ApiV1TranscriptionJobsController_getTranscript",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription job ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcript paragraphs + plain text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTranscriptDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The job has not completed yet (error code: job_not_completed), or it settled without producing a transcript (error code: job_failed)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the transcript text produced by a transcription job",
+        "tags": [
+          "Transcription jobs (API v1)"
+        ]
+      }
+    },
+    "/api/v1/transcription-jobs/{id}/export": {
+      "get": {
+        "operationId": "ApiV1TranscriptionJobsController_export",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription job ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "required": true,
+            "in": "query",
+            "description": "Export format",
+            "schema": {
+              "$ref": "#/components/schemas/ApiExportFormat"
+            }
+          },
+          {
+            "name": "show_timestamps",
+            "required": true,
+            "in": "query",
+            "description": "Show start timestamps in the export. Ignored for srt (always timestamped).",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "show_speakers",
+            "required": true,
+            "in": "query",
+            "description": "Show speaker labels in the export. Ignored for srt.",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported file in the requested format"
+          },
+          "204": {
+            "description": "The audio contained no speech: nothing to export"
+          },
+          "409": {
+            "description": "The job has not completed yet (error code: job_not_completed), or it settled without producing a transcript (error code: job_failed)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export a transcription job's transcript in the requested format",
+        "tags": [
+          "Transcription jobs (API v1)"
         ]
       }
     },
     "/api/v1/transcriptions/{id}/chats": {
       "post": {
+        "description": "You ask a question about a transcript and get the answer in the same response. The chat is saved, so you can add follow-up prompts to it. The transcript enters the chat when it opens: later edits to the transcript do not reach it. This endpoint is in beta and may change.",
         "operationId": "ApiV1LlmChatController_create",
-        "summary": "Ask a question about a transcript and get the answer",
-        "description": "You send a free-text prompt that runs against the transcription and get the answer back in the same response. The exchange is saved as a chat so you can list and retrieve it later. Next: GET the chat by its id to read the answer again.",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           }
@@ -386,7 +564,7 @@
         },
         "responses": {
           "201": {
-            "description": "The created chat, including the answer",
+            "description": "The chat, with your prompt and its answer",
             "content": {
               "application/json": {
                 "schema": {
@@ -394,35 +572,42 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
           }
         },
-        "tags": [
-          "Chats (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Open a chat over a transcript and answer its first prompt",
+        "tags": [
+          "Chats (API v1, beta)"
         ]
       },
       "get": {
+        "description": "You get every chat of the transcription, including chats opened in the web app. Messages are read per chat. This endpoint is in beta and may change.",
         "operationId": "ApiV1LlmChatController_list",
-        "summary": "List the chats for a transcription",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Chats for the transcription",
+            "description": "Chats of the transcription",
             "content": {
               "application/json": {
                 "schema": {
@@ -430,30 +615,37 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
           }
         },
-        "tags": [
-          "Chats (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "List the chats of a transcription",
+        "tags": [
+          "Chats (API v1, beta)"
         ]
       }
     },
-    "/api/v1/transcriptions/{id}/chats/{chat_id}": {
-      "get": {
-        "operationId": "ApiV1LlmChatController_get",
-        "summary": "Get a single chat, including its answer",
+    "/api/v1/transcriptions/{id}/chats/{chat_id}/messages": {
+      "post": {
+        "description": "You continue a chat, including one opened in the web app, and get the answer in the same response. If your connection drops, the answer is still saved: get the chat until turn_in_progress is false. A chat holds up to 2,000,000 tokens. This endpoint is in beta and may change.",
+        "operationId": "ApiV1LlmChatController_addMessage",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "description": "Transcription ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           },
@@ -462,15 +654,25 @@
             "required": true,
             "in": "path",
             "description": "Chat ID",
-            "example": "123e4567-e89b-12d3-a456-426614174000",
             "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiChatMessageCreateDto"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "The requested chat with its prompt and answer",
+          "201": {
+            "description": "The chat, with your prompt and its answer",
             "content": {
               "application/json": {
                 "schema": {
@@ -478,36 +680,131 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
+          },
+          "409": {
+            "description": "Another message on this chat is still being answered (error code: chat_turn_in_progress), or the chat has reached its limit of 2,000,000 tokens (error code: chat_token_limit_reached). Open a new chat to continue after the limit."
           }
         },
-        "tags": [
-          "Chats (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Add a prompt to a chat and get its answer",
+        "tags": [
+          "Chats (API v1, beta)"
+        ]
+      }
+    },
+    "/api/v1/transcriptions/{id}/chats/{chat_id}": {
+      "get": {
+        "description": "You read every prompt and answer of a chat. This endpoint is in beta and may change.",
+        "operationId": "ApiV1LlmChatController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transcription ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "chat_id",
+            "required": true,
+            "in": "path",
+            "description": "Chat ID",
+            "schema": {
+              "example": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The chat with its messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Chat is in beta and not enabled for this account (error code: chat_not_enabled)"
+          },
+          "404": {
+            "description": "The transcription or the chat does not exist"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a chat with its messages",
+        "tags": [
+          "Chats (API v1, beta)"
+        ]
+      }
+    },
+    "/api/v1/webhooks/test": {
+      "post": {
+        "description": "Runs the same validation as job submit, then delivers a signed sample `transcription_job.resolved` payload and returns the outcome. It starts no work and costs nothing, so you can verify your signature check before you send audio.",
+        "operationId": "ApiV1WebhooksController_test",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiWebhookTestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Delivery outcome",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiWebhookTestResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The callback_url is not a public https endpoint on a standard port (error code: invalid_callback_url)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deliver a signed sample payload to a candidate callback_url",
+        "tags": [
+          "Webhooks (API v1)"
         ]
       }
     },
     "/api/v1/uploads/init": {
       "post": {
         "operationId": "UploadsController_init",
-        "summary": "Mint a single-use upload token for a file",
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "A short-lived upload token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InitUploadResponseDto"
-                }
-              }
-            }
-          },
           "201": {
-            "description": "",
+            "description": "Where to upload the file, a short-lived token, and its expiry",
             "content": {
               "application/json": {
                 "schema": {
@@ -517,20 +814,21 @@
             }
           }
         },
-        "tags": [
-          "Uploads (API v1)"
-        ],
         "security": [
           {
             "bearer": []
           }
+        ],
+        "summary": "Mint a single-use upload token for a file",
+        "tags": [
+          "Uploads (API v1)"
         ]
       }
     }
   },
   "info": {
     "title": "Vook API",
-    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.\n\n## Transcribe a file (3 calls)\n\n1. **`POST /api/v1/uploads/init`** → returns an `upload_token`.\n2. **`POST {ingress}/upload`**: upload the whole file to the ingress host (`https://ingress.vook.ai`, **a different host from this API**) as `multipart/form-data` with a single `chunk` field, authenticated with `Authorization: Bearer {upload_token}`. The file is sent as a single chunk; no chunk index/count is needed. This step is on the ingress service and is not listed below.\n3. **`POST /api/v1/transcription-jobs`**: pass the `upload_token` + `file_name` + `language` + `diarize`. Returns a job `id`.\n\nThen **poll `GET /api/v1/transcription-jobs/{id}`** until `status` is `completed` (or `partial`/`failed`). Read each id in `transcription_ids` through **`GET /api/v1/transcriptions/{id}`** and its `/transcript` / `/export` sub-resources.",
+    "description": "Public transcription API. Authenticate every request with your API key: `Authorization: Bearer vk_live_…`.\n\n## Transcribe a file (3 calls)\n\n1. **`POST /api/v1/uploads/init`** → returns an `upload_url`, an `upload_token` and the token's `expires_at`.\n2. **`POST {upload_url}`**: POST the whole file to the `upload_url` returned by call 1 (**a different host from this API**) as `multipart/form-data` with a single `chunk` field, authenticated with `Authorization: Bearer {upload_token}`. The file is sent as a single chunk; no chunk index/count is needed. This step is on the ingress service and is not listed below.\n3. **`POST /api/v1/transcription-jobs`**: pass the `upload_token` + `file_name` + `language` + `diarize`. Returns a job `id`.\n\nThen **poll `GET /api/v1/transcription-jobs/{id}`** until `status` is `completed` (or `failed`). Read the `transcription_id` through **`GET /api/v1/transcriptions/{id}`** and its `/transcript` / `/export` sub-resources.",
     "version": "v1",
     "contact": {}
   },
@@ -543,7 +841,7 @@
   ],
   "components": {
     "securitySchemes": {
-      "apiKey": {
+      "bearer": {
         "scheme": "bearer",
         "bearerFormat": "vk_live_…",
         "type": "http",
@@ -554,12 +852,12 @@
       "ApiTranscriptionStatus": {
         "type": "string",
         "enum": [
-          "queued",
           "processing",
           "completed",
           "empty",
           "failed"
-        ]
+        ],
+        "description": "Lifecycle status"
       },
       "ApiTranscriptionFolderDto": {
         "type": "object",
@@ -585,7 +883,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Transcription (prediction) ID",
+            "description": "Transcription ID",
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           "name": {
@@ -596,12 +894,16 @@
           "status": {
             "description": "Lifecycle status",
             "example": "completed",
-            "$ref": "#/components/schemas/ApiTranscriptionStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiTranscriptionStatus"
+              }
+            ]
           },
           "language": {
             "type": "string",
             "nullable": true,
-            "description": "Spoken language code, when known",
+            "description": "Spoken language code, when known. With 'auto', reads 'auto' until processing ends, then the detected code.",
             "example": "en"
           },
           "diarize": {
@@ -625,6 +927,7 @@
           "folder": {
             "nullable": true,
             "description": "Folder the transcription belongs to, if any",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ApiTranscriptionFolderDto"
@@ -649,17 +952,17 @@
               "$ref": "#/components/schemas/ApiTranscriptionListItemDto"
             }
           },
-          "totalCount": {
+          "total_count": {
             "type": "number",
             "example": 100,
             "description": "Total number of items"
           },
-          "currentPage": {
+          "current_page": {
             "type": "number",
             "example": 1,
             "description": "Current page number"
           },
-          "lastPage": {
+          "last_page": {
             "type": "number",
             "example": 10,
             "description": "Last page number"
@@ -667,9 +970,9 @@
         },
         "required": [
           "data",
-          "totalCount",
-          "currentPage",
-          "lastPage"
+          "total_count",
+          "current_page",
+          "last_page"
         ]
       },
       "ApiTranscriptionDto": {
@@ -677,7 +980,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Transcription (prediction) ID",
+            "description": "Transcription ID",
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
           "name": {
@@ -688,12 +991,16 @@
           "status": {
             "description": "Lifecycle status",
             "example": "completed",
-            "$ref": "#/components/schemas/ApiTranscriptionStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiTranscriptionStatus"
+              }
+            ]
           },
           "language": {
             "type": "string",
             "nullable": true,
-            "description": "Spoken language code, when known",
+            "description": "Spoken language code, when known. With 'auto', reads 'auto' until processing ends, then the detected code.",
             "example": "en"
           },
           "has_transcription": {
@@ -734,6 +1041,7 @@
           "folder": {
             "nullable": true,
             "description": "Folder the transcription belongs to, if any",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ApiTranscriptionFolderDto"
@@ -755,42 +1063,18 @@
         "properties": {
           "text": {
             "type": "string",
-            "description": "Text content of the child",
+            "description": "Text content of the segment",
             "example": "Hello world"
           },
-          "startTimeSeconds": {
+          "start_time_seconds": {
             "type": "number",
             "description": "Start time of this segment in seconds",
             "example": 1.2
           },
-          "endTimeSeconds": {
+          "end_time_seconds": {
             "type": "number",
             "description": "End time of this segment in seconds",
             "example": 3.4
-          },
-          "bold": {
-            "type": "boolean",
-            "description": "Bold formatting"
-          },
-          "italic": {
-            "type": "boolean",
-            "description": "Italic formatting"
-          },
-          "underline": {
-            "type": "boolean",
-            "description": "Underline formatting"
-          },
-          "strikethrough": {
-            "type": "boolean",
-            "description": "Strikethrough formatting"
-          },
-          "highlight": {
-            "type": "boolean",
-            "description": "Highlight formatting"
-          },
-          "noSpaceBefore": {
-            "type": "boolean",
-            "description": "Frontend concatenation hint: when true, the UI joins this child to the previous one with no space separator. Round-tripped verbatim."
           }
         },
         "required": [
@@ -800,12 +1084,12 @@
       "ApiTranscriptParagraphDto": {
         "type": "object",
         "properties": {
-          "speakerKey": {
+          "speaker_key": {
             "type": "string",
-            "description": "Speaker key (e.g. SPEAKER_00)",
+            "description": "Speaker key, present when diarization was requested",
             "example": "SPEAKER_00"
           },
-          "startTimeSeconds": {
+          "start_time_seconds": {
             "type": "number",
             "description": "Start time of the paragraph block in seconds",
             "example": 5
@@ -828,24 +1112,28 @@
           "plain_text": {
             "type": "string",
             "nullable": true,
-            "description": "Plain text version of the transcript (null when not ready)",
+            "description": "Plain text version of the transcript. Null on a transcription with no detected speech.",
             "example": "Hello world. This is a transcription."
-          },
-          "word_count": {
-            "type": "number",
-            "nullable": true,
-            "description": "Total word count of the transcript",
-            "example": 1250
           },
           "transcription": {
             "nullable": true,
-            "description": "Structured transcript paragraphs (null when not ready)",
+            "description": "Structured transcript paragraphs. Null on a transcription with no detected speech.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ApiTranscriptParagraphDto"
             }
+          },
+          "word_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total word count of the transcript. Null when not computed, always on a transcription with no detected speech.",
+            "example": 1250
           }
-        }
+        },
+        "required": [
+          "plain_text",
+          "word_count"
+        ]
       },
       "ApiExportFormat": {
         "type": "string",
@@ -862,17 +1150,23 @@
         "properties": {
           "upload_token": {
             "type": "string",
-            "description": "Upload token returned by POST /api/v1/uploads/init"
+            "description": "Upload token returned by POST /api/v1/uploads/init. Send either upload_token or url."
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Direct https link to an audio or video file, such as a presigned object URL. We fetch it for you. Send either upload_token or url.",
+            "example": "https://example.com/recordings/meeting.mp3"
           },
           "file_name": {
             "type": "string",
-            "description": "Original file name",
+            "description": "Original file name. Required with upload_token, optional with url.",
             "example": "meeting.mp3"
           },
           "language": {
             "type": "string",
-            "description": "Spoken language code",
-            "example": "en"
+            "description": "Spoken language code, such as 'en' or 'fr'. Send 'auto' to let us detect it; the transcription then reports the detected code.",
+            "example": "auto"
           },
           "diarize": {
             "type": "boolean",
@@ -884,11 +1178,15 @@
             "maxLength": 255,
             "description": "Display name for the resulting transcription(s)",
             "example": "Team weekly sync"
+          },
+          "callback_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Webhook endpoint notified once, when the job reaches a terminal status. Public https, standard port. Omit it to poll instead.",
+            "example": "https://example.com/vook/webhook"
           }
         },
         "required": [
-          "upload_token",
-          "file_name",
           "language",
           "diarize"
         ]
@@ -899,9 +1197,9 @@
           "queued",
           "processing",
           "completed",
-          "partial",
           "failed"
-        ]
+        ],
+        "description": "Job lifecycle status"
       },
       "ApiCreateTranscriptionJobResponseDto": {
         "type": "object",
@@ -914,7 +1212,11 @@
           "status": {
             "description": "Job lifecycle status",
             "example": "queued",
-            "$ref": "#/components/schemas/TranscriptionJobStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionJobStatus"
+              }
+            ]
           }
         },
         "required": [
@@ -933,7 +1235,11 @@
           "status": {
             "description": "Job lifecycle status",
             "example": "completed",
-            "$ref": "#/components/schemas/TranscriptionJobStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionJobStatus"
+              }
+            ]
           },
           "name": {
             "type": "string",
@@ -943,8 +1249,8 @@
           },
           "language": {
             "type": "string",
-            "description": "Spoken language code",
-            "example": "en"
+            "description": "Language code as requested. Reads 'auto' when detection was requested; the transcription carries the detected code.",
+            "example": "auto"
           },
           "diarize": {
             "type": "boolean",
@@ -983,17 +1289,17 @@
               "$ref": "#/components/schemas/ApiTranscriptionJobListItemDto"
             }
           },
-          "totalCount": {
+          "total_count": {
             "type": "number",
             "example": 100,
             "description": "Total number of items"
           },
-          "currentPage": {
+          "current_page": {
             "type": "number",
             "example": 1,
             "description": "Current page number"
           },
-          "lastPage": {
+          "last_page": {
             "type": "number",
             "example": 10,
             "description": "Last page number"
@@ -1001,9 +1307,9 @@
         },
         "required": [
           "data",
-          "totalCount",
-          "currentPage",
-          "lastPage"
+          "total_count",
+          "current_page",
+          "last_page"
         ]
       },
       "ApiTranscriptionJobDto": {
@@ -1017,7 +1323,11 @@
           "status": {
             "description": "Job lifecycle status",
             "example": "completed",
-            "$ref": "#/components/schemas/TranscriptionJobStatus"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionJobStatus"
+              }
+            ]
           },
           "name": {
             "type": "string",
@@ -1027,28 +1337,30 @@
           },
           "language": {
             "type": "string",
-            "description": "Spoken language code",
-            "example": "en"
+            "description": "Language code as requested. Reads 'auto' when detection was requested; the transcription carries the detected code.",
+            "example": "auto"
           },
           "diarize": {
             "type": "boolean",
             "description": "Whether diarization was requested",
             "example": false
           },
-          "transcription_ids": {
-            "description": "IDs of the transcriptions this job produced. Read each via GET /api/v1/transcriptions/:id.",
-            "example": [
-              "123e4567-e89b-12d3-a456-426614174000"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "transcription_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID of the transcription this job produced. Read it via GET /api/v1/transcriptions/:id. Null until the job reaches `processing`.",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "callback_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "The endpoint this job notifies when it resolves, as submitted. Null when the job was submitted without one.",
+            "example": "https://example.com/vook/webhook"
           },
           "error_code": {
             "type": "string",
             "nullable": true,
-            "description": "Failure code when the job failed (or partially failed)",
+            "description": "Failure code when the job failed",
             "example": null
           },
           "created_at": {
@@ -1069,7 +1381,6 @@
           "status",
           "language",
           "diarize",
-          "transcription_ids",
           "created_at",
           "updated_at"
         ]
@@ -1081,7 +1392,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 255,
-            "description": "Short label for this exchange, shown when you list chats",
+            "description": "Short label for the chat, shown when you list chats",
             "example": "Action items"
           },
           "prompt": {
@@ -1094,6 +1405,44 @@
         "required": [
           "title",
           "prompt"
+        ]
+      },
+      "ApiChatMessageRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "assistant"
+        ],
+        "description": "Who wrote the message"
+      },
+      "ApiChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "description": "Who wrote the message",
+            "example": "user",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiChatMessageRole"
+              }
+            ]
+          },
+          "content": {
+            "type": "string",
+            "description": "Message text",
+            "example": "List the action items decided in this meeting."
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the message was written",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "role",
+          "content",
+          "created_at"
         ]
       },
       "ApiChatDto": {
@@ -1111,33 +1460,49 @@
           },
           "title": {
             "type": "string",
-            "description": "Label you gave the chat",
+            "description": "Label given to the chat",
             "example": "Action items"
-          },
-          "prompt": {
-            "type": "string",
-            "nullable": true,
-            "description": "The prompt you sent",
-            "example": "List the action items decided in this meeting."
-          },
-          "answer": {
-            "type": "string",
-            "nullable": true,
-            "description": "The answer produced over the transcript",
-            "example": "1. Ship the API docs. 2. Review the pricing page."
           },
           "created_at": {
             "format": "date-time",
             "type": "string",
             "description": "When the chat was created",
             "example": "2024-01-15T10:30:00.000Z"
+          },
+          "messages": {
+            "description": "Prompts and answers, oldest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiChatMessageDto"
+            }
+          },
+          "turn_in_progress": {
+            "type": "boolean",
+            "description": "True while a message on this chat is being answered. Poll the chat until it is false: your prompt and its answer in messages means the turn completed.",
+            "example": false
           }
         },
         "required": [
           "id",
           "transcription_id",
           "title",
-          "created_at"
+          "created_at",
+          "messages",
+          "turn_in_progress"
+        ]
+      },
+      "ApiChatMessageCreateDto": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Question or instruction to run against the transcript",
+            "example": "List the action items decided in this meeting."
+          }
+        },
+        "required": [
+          "prompt"
         ]
       },
       "ApiChatListItemDto": {
@@ -1155,7 +1520,7 @@
           },
           "title": {
             "type": "string",
-            "description": "Label you gave the chat",
+            "description": "Label given to the chat",
             "example": "Action items"
           },
           "created_at": {
@@ -1176,7 +1541,7 @@
         "type": "object",
         "properties": {
           "data": {
-            "description": "Chats for the transcription, newest first",
+            "description": "Chats for the transcription, including chats opened in the web app",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ApiChatListItemDto"
@@ -1187,17 +1552,75 @@
           "data"
         ]
       },
-      "InitUploadResponseDto": {
+      "ApiWebhookTestDto": {
         "type": "object",
         "properties": {
-          "upload_token": {
+          "callback_url": {
             "type": "string",
-            "description": "Short-lived token scoped to this upload session. Send as `Authorization: Bearer <upload_token>` to the ingress `/upload` endpoint with the file, then pass it again when you create the transcription job.",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            "maxLength": 2048,
+            "description": "Candidate webhook endpoint. Public https, standard port.",
+            "example": "https://example.com/vook/webhook"
           }
         },
         "required": [
-          "upload_token"
+          "callback_url"
+        ]
+      },
+      "ApiWebhookTestResponseDto": {
+        "type": "object",
+        "properties": {
+          "delivered": {
+            "type": "boolean",
+            "description": "Whether the endpoint answered 2xx",
+            "example": true
+          },
+          "status_code": {
+            "type": "number",
+            "nullable": true,
+            "description": "HTTP status the endpoint answered, null on a transport error",
+            "example": 200
+          },
+          "duration_ms": {
+            "type": "number",
+            "description": "Round-trip time in milliseconds",
+            "example": 143
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transport error, null when the endpoint answered",
+            "example": null
+          }
+        },
+        "required": [
+          "delivered",
+          "duration_ms"
+        ]
+      },
+      "InitUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "upload_url": {
+            "type": "string",
+            "description": "Absolute URL to POST the file to, as `multipart/form-data` with a single `chunk` field. Send the token as `Authorization: Bearer <upload_token>`. This is a different host from the API. Always use the value returned here rather than hardcoding it.",
+            "example": "https://ingress.vook.ai/upload"
+          },
+          "upload_token": {
+            "type": "string",
+            "description": "Short-lived token scoped to this upload session. Send as `Authorization: Bearer <upload_token>` to `upload_url` with the file, then pass it again when you create the transcription job.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the upload token expires. Start the upload before this instant; an upload already in flight is not interrupted.",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "upload_url",
+          "upload_token",
+          "expires_at"
         ]
       }
     }

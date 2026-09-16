@@ -1,20 +1,19 @@
 ---
-title: "Chat with a transcript"
-description: "Ask questions about a transcription and get answers grounded in its content."
+title: "Chat with a transcript (beta)"
+sidebarTitle: "Chat (beta)"
+description: "Ask questions about a transcription and get answers drawn from what was said."
 ---
 
-Chat lets you ask a question about a transcription and get an answer drawn from
-what was said. You send a prompt, and Vook's AI answers using the transcript as
-its source: summaries, action items, decisions, or anything else the recording
-covers. Each exchange is saved against the transcription so you can list and
-revisit it later.
+<Warning>
+  **Chat is in beta.** It is enabled per account. While it is in beta, the chat
+  endpoints and their response shape may change or be removed within `/v1`
+  without notice.
+</Warning>
 
-<Note>
-  The base URL is `https://www.api.vook.ai/api/v1`. Chat runs against an existing
-  transcription, so you need a transcription `id` whose transcript is ready
-  (`has_transcription` is `true`). See [Retrieve and export](/retrieve-export)
-  to find one, or [Transcribe a file](/upload) to create one.
-</Note>
+Chat lets you ask a question about a transcription and get the answer in the
+same response: a summary, the action items, the decisions made, or anything else
+the recording covers. Each chat is saved against its transcription, so you can
+add follow-up prompts and read the conversation back later.
 
 ## Before you start
 
@@ -24,13 +23,26 @@ Mint an API key (see [Authentication](/authentication)) and export it:
 export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
+You also need the `id` of a transcription whose transcript is ready
+(`has_transcription` is `true`). See [Retrieve and export](/retrieve-export) to
+find one.
+
 The Python examples use the `requests` package (`pip install requests`).
 
-## 1. Ask a question
+<Note>
+  If chat is not enabled for your account, every chat endpoint returns `403`
+  with the error code `chat_not_enabled`, reads included.
+</Note>
 
-Send a `title` and a `prompt` to the transcription's `chats` collection. The
-`title` is a short label you will see when listing chats; the `prompt` is the
-question or instruction to run against the transcript.
+## 1. Open a chat
+
+Send a `title` and your first `prompt`. Vook opens the chat, answers the prompt,
+and returns the whole chat.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `title` | string | Short label for the chat, shown when you list chats. 1 to 255 characters. |
+| `prompt` | string | Question or instruction to run against the transcript. At least 1 character. |
 
 <CodeGroup>
 
@@ -38,10 +50,7 @@ question or instruction to run against the transcript.
 curl -X POST "https://www.api.vook.ai/api/v1/transcriptions/$ID/chats" \
   -H "Authorization: Bearer $VOOK_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "title": "Summary",
-    "prompt": "Summarize this transcript in two sentences."
-  }'
+  -d '{"title": "Action items", "prompt": "List the action items decided in this meeting."}'
 ```
 
 ```python Python
@@ -54,46 +63,133 @@ resp = requests.post(
     f"{BASE}/transcriptions/{transcription_id}/chats",
     headers=headers,
     json={
-        "title": "Summary",
-        "prompt": "Summarize this transcript in two sentences.",
+        "title": "Action items",
+        "prompt": "List the action items decided in this meeting.",
     },
 )
 resp.raise_for_status()
 chat = resp.json()
-print(chat["answer"])
+print(chat["messages"][-1]["content"])
 ```
 
 </CodeGroup>
 
-The response is the chat, with its `answer`:
+A successful request returns `201` with the chat:
 
 ```json
 {
-  "id": "a35f053f-0ef3-4022-9530-00d35e193605",
-  "transcription_id": "4d039fef-0be2-4283-9834-7dd43c70652e",
-  "title": "Summary",
-  "prompt": "Summarize this transcript in two sentences.",
-  "answer": "The speaker spent three months at Princess Boot Camp. They learned to ride a horse, waltz, and sing.",
-  "created_at": "2024-01-15T10:30:00.000Z"
+  "id": "5f2b8c1e-3a4d-4e6f-9b7a-1c2d3e4f5a6b",
+  "transcription_id": "123e4567-e89b-12d3-a456-426614174000",
+  "title": "Action items",
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "List the action items decided in this meeting.",
+      "created_at": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "role": "assistant",
+      "content": "1. Maria sends the revised budget by Friday.\n2. Tom books the venue for the offsite.",
+      "created_at": "2024-01-15T10:30:12.000Z"
+    }
+  ],
+  "turn_in_progress": false
 }
 ```
 
-The request body fields are:
-
-| Field | Required | Description |
+| Field | Type | Description |
 | --- | --- | --- |
-| `title` | yes | Short label for the exchange, shown when you list chats. |
-| `prompt` | yes | Question or instruction to run against the transcript. |
+| `id` | string | Chat ID. Use it to add prompts and to read the chat. |
+| `transcription_id` | string | The transcription this chat runs against. |
+| `title` | string | The label you gave the chat. |
+| `created_at` | string | When the chat was created, as an ISO 8601 timestamp. |
+| `messages` | object[] | Prompts and answers, oldest first. |
+| `messages[].role` | string | Who wrote the message: `user` for a prompt, `assistant` for an answer. |
+| `messages[].content` | string | Message text. |
+| `messages[].created_at` | string | When the message was written, as an ISO 8601 timestamp. |
+| `turn_in_progress` | boolean | `true` while a prompt on this chat is being answered. |
 
-The `answer` is usually ready in the response. If it comes back `null`, the
-answer is still being prepared, so re-request the chat by its `id` (see
-[step 3](#3-read-a-single-chat)) until `answer` is set.
+Each request returns one complete answer as JSON. Answers can take a while on a
+long transcript, so give your HTTP client a generous timeout.
 
-## 2. List the chats
+The chat reads the transcript as it is when the chat opens. If you edit the
+transcript later, the existing chat keeps the earlier version: open a new chat
+to ask about the edited transcript.
 
-Retrieve every chat saved against a transcription, newest first. Each item
-carries its `id`, `title`, and `created_at`. Fetch a chat by `id` to read its
-full `prompt` and `answer`.
+## 2. Add a follow-up prompt
+
+Send another `prompt` to the chat. The answer takes the earlier messages into
+account.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/transcriptions/$ID/chats/$CHAT_ID/messages" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Who owns each item?"}'
+```
+
+```python Python
+resp = requests.post(
+    f"{BASE}/transcriptions/{transcription_id}/chats/{chat_id}/messages",
+    headers=headers,
+    json={"prompt": "Who owns each item?"},
+)
+resp.raise_for_status()
+chat = resp.json()
+print(chat["messages"][-1]["content"])
+```
+
+</CodeGroup>
+
+A successful request returns `201` with the full chat, your prompt and its
+answer appended:
+
+```json
+{
+  "id": "5f2b8c1e-3a4d-4e6f-9b7a-1c2d3e4f5a6b",
+  "transcription_id": "123e4567-e89b-12d3-a456-426614174000",
+  "title": "Action items",
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "List the action items decided in this meeting.",
+      "created_at": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "role": "assistant",
+      "content": "1. Maria sends the revised budget by Friday.\n2. Tom books the venue for the offsite.",
+      "created_at": "2024-01-15T10:30:12.000Z"
+    },
+    {
+      "role": "user",
+      "content": "Who owns each item?",
+      "created_at": "2024-01-15T10:32:00.000Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Maria owns the revised budget. Tom owns the venue booking.",
+      "created_at": "2024-01-15T10:32:08.000Z"
+    }
+  ],
+  "turn_in_progress": false
+}
+```
+
+The fields are the same as when you [open a chat](#1-open-a-chat).
+
+A chat answers one prompt at a time. If you send a prompt while another one on
+the same chat is still being answered, the request returns `409` with the code
+`chat_turn_in_progress`. Wait until the chat's `turn_in_progress` is `false`,
+then send it again.
+
+## 3. List the chats of a transcription
+
+Get every chat of a transcription. The list is not paginated. It does not
+include messages: read a chat to get them.
 
 <CodeGroup>
 
@@ -103,9 +199,7 @@ curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/chats" \
 ```
 
 ```python Python
-resp = requests.get(
-    f"{BASE}/transcriptions/{transcription_id}/chats", headers=headers
-)
+resp = requests.get(f"{BASE}/transcriptions/{transcription_id}/chats", headers=headers)
 resp.raise_for_status()
 for c in resp.json()["data"]:
     print(c["id"], c["title"])
@@ -117,20 +211,30 @@ for c in resp.json()["data"]:
 {
   "data": [
     {
-      "id": "a35f053f-0ef3-4022-9530-00d35e193605",
-      "transcription_id": "4d039fef-0be2-4283-9834-7dd43c70652e",
-      "title": "Summary",
+      "id": "5f2b8c1e-3a4d-4e6f-9b7a-1c2d3e4f5a6b",
+      "transcription_id": "123e4567-e89b-12d3-a456-426614174000",
+      "title": "Action items",
       "created_at": "2024-01-15T10:30:00.000Z"
     }
   ]
 }
 ```
 
-## 3. Read a single chat
+| Field | Type | Description |
+| --- | --- | --- |
+| `data` | object[] | Every chat of the transcription, including chats opened in the web app. |
+| `data[].id` | string | Chat ID. |
+| `data[].transcription_id` | string | The transcription this chat runs against. |
+| `data[].title` | string | The label given to the chat. |
+| `data[].created_at` | string | When the chat was created, as an ISO 8601 timestamp. |
 
-Fetch one chat by its `id` to read its `prompt` and `answer`. Use this to pick
-up an earlier exchange, or to check for an `answer` that was not yet set when you
-created the chat.
+Chats belong to your account, so the list also includes chats opened in the Vook
+web app. You can read and continue them through the API. A chat opened in the
+web app may start with an `assistant` message.
+
+## 4. Read a chat
+
+Get a chat with all of its messages.
 
 <CodeGroup>
 
@@ -144,18 +248,78 @@ resp = requests.get(
     f"{BASE}/transcriptions/{transcription_id}/chats/{chat_id}", headers=headers
 )
 resp.raise_for_status()
-chat = resp.json()
-if chat["answer"] is not None:
-    print(chat["answer"])
+for m in resp.json()["messages"]:
+    print(m["role"], ":", m["content"])
 ```
 
 </CodeGroup>
 
+```json
+{
+  "id": "5f2b8c1e-3a4d-4e6f-9b7a-1c2d3e4f5a6b",
+  "transcription_id": "123e4567-e89b-12d3-a456-426614174000",
+  "title": "Action items",
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "List the action items decided in this meeting.",
+      "created_at": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "role": "assistant",
+      "content": "1. Maria sends the revised budget by Friday.\n2. Tom books the venue for the offsite.",
+      "created_at": "2024-01-15T10:30:12.000Z"
+    }
+  ],
+  "turn_in_progress": false
+}
+```
+
+The fields are the same as when you [open a chat](#1-open-a-chat).
+
+## If your connection drops
+
+The answer keeps being produced after your connection closes, and it is saved to
+the chat. Recover it by reading the chat instead of sending the prompt again,
+which would ask the same question twice.
+
+**On a follow-up prompt**, you already have the chat `id`:
+
+1. Read the chat every few seconds until `turn_in_progress` is `false`.
+2. If your prompt and its answer are the last two messages, the turn completed.
+3. If they are missing, the turn failed. Send the prompt again.
+
+**When opening a chat**, the response never reached you, so you do not have its
+`id` yet:
+
+1. List the chats of the transcription and find yours by `title`. Give each chat
+   a distinct title so this match is reliable.
+2. If it is there, read it until `turn_in_progress` is `false`.
+3. If it does not appear after a while, opening the chat failed. Open it again.
+
+## Limits
+
+| Limit | Value | What happens above it |
+| --- | --- | --- |
+| Prompts answered at once | 1 per chat | `409 chat_turn_in_progress`. Wait for the current answer, then retry. |
+| Chat length | 2,000,000 tokens per chat | `409 chat_token_limit_reached`. Open a new chat to continue. |
+
+Every message counts toward the chat length, including messages from the web
+app. The limit is checked before a prompt is answered, so a prompt accepted just
+under the limit still gets its answer.
+
+## Retention
+
+A chat lives as long as its transcription. There is no endpoint to delete a
+single chat: when you delete the transcription, its chats are deleted with it.
+See [Data retention](/retention).
+
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">
-    List, read, and export your transcriptions.
+  <Card title="Errors and limits" icon="triangle-exclamation" href="/errors">
+    Error codes, retry rules, and limits.
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference">
     Try every endpoint interactively in the playground.

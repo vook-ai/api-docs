@@ -1,0 +1,121 @@
+---
+title: "Errors and limits"
+description: "Read the error body, decide when to retry, and know the limits on what you submit."
+---
+
+Every failed request returns the same JSON body with a stable error `code`, so
+your integration can branch on one field and handle every endpoint the same
+way. This page lists those codes, when a retry makes sense, and the limits that
+apply to each submission.
+
+## The error body
+
+Any non-`2xx` response on `/api/v1` returns this object:
+
+```json
+{
+  "status_code": 404,
+  "code": "not_found",
+  "message": "Transcription job not found",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "path": "/api/v1/transcription-jobs/123e4567-e89b-12d3-a456-426614174000"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `status_code` | integer | The HTTP status of the response. |
+| `code` | string | Machine-readable cause, in `snake_case`. **Stable**: branch on this field. |
+| `message` | string | Human-readable description for logs and error screens. It can change in any release, so do not parse it. |
+| `timestamp` | string | When the error occurred, as an ISO 8601 timestamp. |
+| `path` | string | The request path. |
+| `validation_errors` | string[] | Present on a `400` from request validation, with one entry per invalid field. |
+
+## When to retry
+
+The status tells you what to do next:
+
+- **`4xx`**: the request will not succeed as sent. Change the request before
+  you send it again. One exception: `409 chat_turn_in_progress` succeeds once
+  the current answer on that chat is ready.
+- **`429`**: the request is valid and the timing is not. Wait for the number of
+  seconds in the `Retry-After` header, then retry.
+- **`5xx`**: the same request may succeed later. Retry with exponential backoff.
+
+## Error codes
+
+| Code | Status | Meaning and next step |
+| --- | --- | --- |
+| `invalid_request` | `400` and other `4xx` | The request is malformed or a parameter is invalid. See `validation_errors`, fix the request. |
+| `invalid_callback_url` | `400` | `callback_url` is not public https on a standard port. See [Webhooks](/webhooks). |
+| `url_not_supported` | `400` | The source `url` is not https, or uses a non-standard port. Fix the URL. |
+| `url_not_media` | `400` | The source `url` answered, but it is not audio or video (for example a web page). Send a direct link to the media file. |
+| `url_not_accessible` | `400` | The source `url` cannot be fetched: it answered with a `4xx` (for example a typo, a private file, or an expired signed URL), or it points to a private or local address. Send a link that is reachable from the internet. |
+| `unauthorized` | `401`, `403` | The API key is missing, invalid, revoked, or expired. See [Authentication](/authentication). |
+| `insufficient_api_credits` | `402` | Your account has no credit left for this request. Top up, then send the request again. |
+| `chat_not_enabled` | `403` | [Chat](/chat) is in beta and not enabled for your account. Returned by every chat endpoint. |
+| `not_found` | `404` | The resource does not exist, or it was deleted. |
+| `job_not_completed` | `409` | The transcript does not exist yet. Poll the job until it is `completed`, then retry. |
+| `job_failed` | `409` | The job failed, so it has no transcript. Read the job's `error_code` to see why. |
+| `chat_turn_in_progress` | `409` | Another prompt on this chat is still being answered. Wait until the chat's `turn_in_progress` is `false`, then retry. |
+| `chat_token_limit_reached` | `409` | The chat reached its length limit. Open a new chat to continue. |
+| `too_many_unsettled_jobs` | `429` | You reached the limit of unfinished jobs. Retry after `Retry-After` seconds. |
+| `url_unreachable` | `502` | The source `url` could not be reached, or its server answered with a `5xx`. Retry later. |
+| `url_probe_timeout` | `504` | The source `url` did not answer in time. Retry later. |
+| `internal_error` | `5xx` | Something went wrong on our side. Retry with backoff. |
+
+Handle unknown codes by their status, using the retry rules above.
+
+## Job error codes
+
+Some problems appear only after the job is accepted, for example when the file
+turns out to be too long. In that case the job reaches `failed` and its
+`error_code` field names the cause. Read it with
+`GET /api/v1/transcription-jobs/{id}` or from the [webhook](/webhooks) body.
+
+| `error_code` | Meaning |
+| --- | --- |
+| `file_too_long` | The audio is longer than 5 hours. Split it and submit the parts. |
+| `url_too_large` | The file at the source `url` is larger than 6 GB. |
+| `url_not_media` | The downloaded file is not audio or video. |
+| `url_not_accessible` | The source `url` refused the download. |
+| `url_unreachable` | The download failed or did not finish in time. Submit the job again. |
+| `insufficient_api_credits` | Your account had no credit left when the job was due to start. |
+| `audio_processing_failed` | The file could not be read as audio. Check the file and submit it again. |
+| `transcription_failed` | Transcription did not complete. Submit the job again. |
+| `diarization_failed` | Speaker identification did not complete. Submit the job again. |
+| `internal_error` | Something went wrong on our side. Submit the job again. |
+
+Treat any other value as a failed job.
+
+## Limits
+
+These limits apply to every submission, whether you upload a file or send a URL.
+
+| Limit | Value | What happens above it |
+| --- | --- | --- |
+| File size | 6 GB | A file upload is refused. On a URL submission, the job fails with `url_too_large`. |
+| Audio duration | 5 hours per job | The job is accepted, then fails with `file_too_long`. |
+| URL download time | 10 minutes | The job fails with `url_unreachable`. |
+| Unfinished jobs per account | 20 | New submissions return `429 too_many_unsettled_jobs` with `Retry-After: 60`. |
+
+A job counts as unfinished while its status is `queued` or `processing`. The
+limit applies across all of your API keys. Each job that reaches `completed` or
+`failed` frees a slot.
+
+[Chat](/chat) has its own limit:
+
+| Limit | Value | What happens above it |
+| --- | --- | --- |
+| Chat length | 2,000,000 tokens per chat | New prompts return `409 chat_token_limit_reached`. Open a new chat. |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Transcribe from a file" icon="cloud-arrow-up" href="/upload">
+    Upload a file and create a transcription job.
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/webhooks">
+    Get notified when a job reaches `completed` or `failed`.
+  </Card>
+</CardGroup>

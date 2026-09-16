@@ -19,10 +19,16 @@
         "pages": [
           "introduction",
           "quickstart",
-          "upload",
+          {
+            "group": "Transcribe",
+            "pages": ["upload", "transcribe-url"]
+          },
+          "webhooks",
           "retrieve-export",
           "chat",
-          "authentication"
+          "authentication",
+          "errors",
+          "retention"
         ]
       },
       {

@@ -1,0 +1,112 @@
+---
+title: "Transcribe from a URL"
+sidebarTitle: "From a URL"
+description: "Turn an audio or video file you already host into a transcription with a single call."
+---
+
+If your file is already reachable over https, for example behind a presigned
+object URL, you can send its link directly. Vook fetches the file for you, so
+you create the job in one call and skip the upload steps. To send a file from
+your machine instead, see [Transcribe from a file](/upload).
+
+## Before you start
+
+Mint an API key (see [Authentication](/authentication)) and export it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The Python examples use the `requests` package (`pip install requests`).
+
+## 1. Create the transcription job
+
+Pass the file's direct https link as `url`. The response gives you a job `id`
+and its `status`.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/transcription-jobs" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/recordings/meeting.mp3",
+    "language": "en",
+    "diarize": false,
+    "name": "Team weekly sync"
+  }'
+```
+
+```python Python
+import os, requests
+
+BASE = "https://www.api.vook.ai/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['VOOK_API_KEY']}"}
+
+resp = requests.post(
+    f"{BASE}/transcription-jobs",
+    headers=headers,
+    json={
+        "url": "https://example.com/recordings/meeting.mp3",
+        "language": "en",
+        "diarize": False,
+        "name": "Team weekly sync",
+    },
+)
+resp.raise_for_status()
+job_id = resp.json()["id"]
+```
+
+</CodeGroup>
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "queued"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Transcription job ID. Use it to follow the job. |
+| `status` | string | Job lifecycle status. See [Poll the job](/upload#4-poll-the-job). |
+
+The request body fields are:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `url` | yes | Direct https link to an audio or video file, up to 2048 characters. |
+| `language` | yes | Spoken language code, for example `en` or `fr`. Send `auto` to detect it; the transcription then reports the detected code. |
+| `diarize` | yes | Set `true` to separate speakers. |
+| `file_name` | no | Original file name. |
+| `name` | no | Display name for the resulting transcription. Defaults to `file_name`, then to the last segment of the `url` path (for example `meeting.mp3`). |
+| `callback_url` | no | Endpoint to notify when the job finishes. See [Webhooks](/webhooks). |
+
+The link is checked before the job is created. If it does not point to
+reachable media, the request answers with an error code starting with `url_`.
+A `400` means you need to fix the URL; a `502` or `504` means you can retry later.
+See [Errors and limits](/errors) for each code.
+If your account has no credit left for this request, it returns `402` with the
+error code `insufficient_api_credits`.
+
+## 2. Follow the job and read the result
+
+From here the job behaves exactly like one created from an uploaded file:
+
+- **Poll** `GET /api/v1/transcription-jobs/{id}` until `status` is `completed`
+  or `failed`. See [Poll the job](/upload#4-poll-the-job).
+- Or **get notified** by passing a `callback_url`. See [Webhooks](/webhooks).
+- **Read** the transcript from `GET /api/v1/transcription-jobs/{id}/transcript`
+  or download an export. See [Read the result](/upload#5-read-the-result).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="bell" href="/webhooks">
+    Get notified when a job finishes instead of polling.
+  </Card>
+  <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">
+    Read a transcript and download an export.
+  </Card>
+</CardGroup>

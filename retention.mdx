@@ -1,0 +1,54 @@
+---
+title: "Data retention"
+description: "How long Vook keeps your audio and transcripts, and how to delete them."
+---
+
+You stay in control of your data. Vook keeps the audio and transcripts you
+submit through the API until you delete them, so you decide when they go.
+
+## What Vook keeps, and for how long
+
+| Data | How long it is kept |
+| --- | --- |
+| Working audio used during processing | Deleted automatically after **1 day**. |
+| Your audio and transcripts | Kept until **you delete them**. |
+| Chats on a transcription | Kept as long as the transcription. Deleted **with it**. |
+| Everything in a deleted account | Deleted within **30 days** of the account deletion. |
+| Everything in an inactive account | Deleted after **two years** without activity. You receive notices 30 days and 7 days before, followed by a 30-day grace period. |
+
+API transcripts and audio have no automatic expiry. If your own policy calls for
+one, delete transcriptions on your schedule with the endpoint below.
+
+## Delete a transcription
+
+`DELETE /api/v1/transcriptions/{id}` deletes a transcription, its audio, and
+its [chats](/chat).
+
+```bash
+curl -X DELETE "https://www.api.vook.ai/api/v1/transcriptions/$ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+- A successful delete returns `204`. Deleting the same transcription again also
+  returns `204`, so a retry is safe.
+- If you hold the job id instead, `DELETE /api/v1/transcription-jobs/{id}` does
+  the same.
+- While the job is still running, the request returns `409` with the code
+  `job_not_completed`. Wait for the job to finish, then retry.
+- After the delete, reading the transcription, its transcript, its export, or its
+  chats returns `404`. The job itself stays readable
+  with `GET /api/v1/transcription-jobs/{id}`.
+
+See [Retrieve and export](/retrieve-export#5-delete-a-transcription) for Python
+examples.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">
+    List, read, export, and delete your transcriptions.
+  </Card>
+  <Card title="Errors and limits" icon="triangle-exclamation" href="/errors">
+    Error codes, retry rules, and submission limits.
+  </Card>
+</CardGroup>

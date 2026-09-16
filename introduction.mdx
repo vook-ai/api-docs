@@ -4,8 +4,9 @@ description: "Transcribe audio and video, then retrieve and export the results w
 ---
 
 The Vook API lets you work with your transcriptions programmatically: upload a
-file to transcribe, list your transcriptions, check their status, read the
-transcript text, and download exports, using only an API key.
+file or send a link to transcribe, get notified by webhook when it is done, list
+your transcriptions, read the transcript text, download exports, and delete
+transcriptions, using only an API key.
 
 ## Base URL
 
@@ -26,6 +27,12 @@ Authorization: Bearer $VOOK_API_KEY
 Keys look like `vk_live_…`. See [Authentication](/authentication) for how to
 mint and revoke them.
 
+## Conventions
+
+Every request and response field is `snake_case`, on resources, list pages,
+and error bodies alike. Timestamps are ISO 8601 strings. Failed requests share
+one error body with a stable `code`; see [Errors and limits](/errors).
+
 ## Requirements
 
 The examples in these guides use `curl` and Python. The Python snippets require
@@ -38,7 +45,7 @@ pip install requests
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Transcribe a file" icon="cloud-arrow-up" href="/upload">
+  <Card title="Transcribe from a file" icon="cloud-arrow-up" href="/upload">
     Upload a file and turn it into a transcription.
   </Card>
   <Card title="Retrieve and export" icon="file-lines" href="/retrieve-export">

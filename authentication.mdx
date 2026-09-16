@@ -13,6 +13,11 @@ deploy or configure first. Your account must have API access enabled. Give the
 key a name, and the app shows you a `vk_live_…` value **once**. Copy it
 immediately and store it somewhere safe, since you cannot retrieve it again.
 
+Alongside the key, the app shows a **webhook signing secret**, also only once.
+You use it to verify that webhook requests come from Vook (see
+[Verify the signature](/webhooks#verify-the-signature)). Store it with the key.
+It only verifies deliveries, so it cannot authenticate API requests.
+
 <Card title="Get an API key" icon="key" href="https://www.vook.ai/settings/api-keys">
   Open the API Keys page in the Vook web app to create and manage your keys.
 </Card>
@@ -41,6 +46,10 @@ curl https://www.api.vook.ai/api/v1/transcriptions \
 - Revoke a key at any time from the **API Keys** page in the web app.
 - A revoked or expired key is rejected on the next request, so mint a new one to
   continue.
+- Revoking a key stops new requests with it. Jobs it already submitted still
+  run to completion.
+- A signing secret belongs to its key and cannot be rotated on its own. If the
+  secret leaks, mint a new key and revoke the old one.
 
 <Warning>
   Treat `vk_live_…` keys like passwords. Do not commit them to source control or
