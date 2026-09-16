@@ -10,7 +10,8 @@ apply to each submission.
 
 ## The error body
 
-Any non-`2xx` response on `/api/v1` returns this object:
+Any non-`2xx` response on `/api/v1`, and on the `upload_url` you send files to,
+returns this object:
 
 ```json
 {
@@ -36,8 +37,9 @@ Any non-`2xx` response on `/api/v1` returns this object:
 The status tells you what to do next:
 
 - **`4xx`**: the request will not succeed as sent. Change the request before
-  you send it again. One exception: `409 chat_turn_in_progress` succeeds once
-  the current answer on that chat is ready.
+  you send it again. Two exceptions: `409 chat_turn_in_progress` succeeds once
+  the current answer on that chat is ready, and `409 upload_not_found` succeeds
+  once the file upload is stored.
 - **`429`**: the request is valid and the timing is not. Wait for the number of
   seconds in the `Retry-After` header, then retry.
 - **`5xx`**: the same request may succeed later. Retry with exponential backoff.
@@ -51,15 +53,18 @@ The status tells you what to do next:
 | `url_not_supported` | `400` | The source `url` is not https, or uses a non-standard port. Fix the URL. |
 | `url_not_media` | `400` | The source `url` answered, but it is not audio or video (for example a web page). Send a direct link to the media file. |
 | `url_not_accessible` | `400` | The source `url` cannot be fetched: it answered with a `4xx` (for example a typo, a private file, or an expired signed URL), or it points to a private or local address. Send a link that is reachable from the internet. |
-| `unauthorized` | `401`, `403` | The API key is missing, invalid, revoked, or expired. See [Authentication](/authentication). |
+| `unauthorized` | `401`, `403` | The API key is missing, invalid, revoked, or expired. See [Authentication](/authentication). On the `upload_url`, the `upload_token` was not accepted; get a new one from `POST /api/v1/uploads/init`. |
 | `insufficient_api_credits` | `402` | Your account has no credit left for this request. Top up, then send the request again. |
 | `chat_not_enabled` | `403` | [Chat](/chat) is in beta and not enabled for your account. Returned by every chat endpoint. |
 | `not_found` | `404` | The resource does not exist, or it was deleted. |
 | `job_not_completed` | `409` | The transcript does not exist yet. Poll the job until it is `completed`, then retry. |
 | `job_failed` | `409` | The job failed, so it has no transcript. Read the job's `error_code` to see why. |
+| `upload_not_found` | `409` | No file is stored for this `upload_token`, so no job was created. Finish the upload and wait for its `201`, then create the job again with the same token. See [Transcribe from a file](/upload). |
 | `chat_turn_in_progress` | `409` | Another prompt on this chat is still being answered. Wait until the chat's `turn_in_progress` is `false`, then retry. |
 | `chat_token_limit_reached` | `409` | The chat reached its length limit. Open a new chat to continue. |
+| `upload_too_large` | `413` | The uploaded file is above the 6 GB [limit](#limits). Send a smaller file. |
 | `too_many_unsettled_jobs` | `429` | You reached the limit of unfinished jobs. Retry after `Retry-After` seconds. |
+| `upload_failed` | `502` | The uploaded file was not stored. Upload it again with the same `upload_token`. |
 | `url_unreachable` | `502` | The source `url` could not be reached, or its server answered with a `5xx`. Retry later. |
 | `url_probe_timeout` | `504` | The source `url` did not answer in time. Retry later. |
 | `internal_error` | `5xx` | Something went wrong on our side. Retry with backoff. |
@@ -80,6 +85,7 @@ turns out to be too long. In that case the job reaches `failed` and its
 | `url_not_media` | The downloaded file is not audio or video. |
 | `url_not_accessible` | The source `url` refused the download. |
 | `url_unreachable` | The download failed or did not finish in time. Submit the job again. |
+| `upload_not_found` | The uploaded file could not be found when the job started. Upload the file again and submit a new job. |
 | `insufficient_api_credits` | Your account had no credit left when the job was due to start. |
 | `audio_processing_failed` | The file could not be read as audio. Check the file and submit it again. |
 | `transcription_failed` | Transcription did not complete. Submit the job again. |
@@ -94,7 +100,7 @@ These limits apply to every submission, whether you upload a file or send a URL.
 
 | Limit | Value | What happens above it |
 | --- | --- | --- |
-| File size | 6 GB | A file upload is refused. On a URL submission, the job fails with `url_too_large`. |
+| File size | 6 GB | A file upload returns `413 upload_too_large`. On a URL submission, the job fails with `url_too_large`. |
 | Audio duration | 5 hours per job | The job is accepted, then fails with `file_too_long`. |
 | URL download time | 10 minutes | The job fails with `url_unreachable`. |
 | Unfinished jobs per account | 20 | New submissions return `429 too_many_unsettled_jobs` with `Retry-After: 60`. |

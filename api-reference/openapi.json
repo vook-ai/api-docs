@@ -277,6 +277,9 @@
           },
           "402": {
             "description": "Your API credit balance is empty (error code: insufficient_api_credits). Top up to dispatch new jobs."
+          },
+          "409": {
+            "description": "No stored file for the upload_token (error code: upload_not_found). Upload to upload_url, wait for its success response, then submit again with the same token."
           }
         },
         "security": [
