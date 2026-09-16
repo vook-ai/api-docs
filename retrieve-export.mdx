@@ -23,10 +23,8 @@ Fetch a paginated list of your transcriptions. The response includes each
 transcription's `id`, `name`, and `status`.
 
 The list covers your whole account, including transcriptions you created in the
-Vook web app. To list only the work you submitted through the API, use
-`GET /api/v1/transcription-jobs`. It accepts the same query parameters and
-returns the same pagination fields, with job items instead of transcriptions.
-See the [API Reference](/api-reference) for the item fields.
+Vook web app. To list only the work you submitted through the API, see
+[List your transcription jobs](#list-your-transcription-jobs).
 
 <CodeGroup>
 
@@ -97,6 +95,62 @@ Narrow the list with these optional query parameters:
 | `page_size` | Items per page, a whole number from `1` to `100`. Defaults to `10`. Any other value returns `400 invalid_request`. |
 | `search` | Free-text search over transcription names. |
 | `in_progress` | Set to `true` to return only transcriptions still being processed. |
+
+### List your transcription jobs
+
+`GET /api/v1/transcription-jobs` lists only the jobs you submitted through the
+API. It takes the same query parameters as the transcription list and returns
+the same pagination fields, with one job per item. Read a job's
+`transcription_id` with `GET /api/v1/transcription-jobs/{id}`.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcription-jobs" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(f"{BASE}/transcription-jobs", headers=headers)
+resp.raise_for_status()
+for job in resp.json()["data"]:
+    print(job["id"], job["status"], job["name"])
+```
+
+</CodeGroup>
+
+```json
+{
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "status": "completed",
+      "name": "Team weekly sync",
+      "language": "en",
+      "diarize": false,
+      "created_at": "2024-01-15T10:30:00.000Z",
+      "updated_at": "2024-01-15T10:35:00.000Z"
+    }
+  ],
+  "total_count": 100,
+  "current_page": 1,
+  "last_page": 10
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `data` | object[] | The jobs on this page. |
+| `data[].id` | string | Transcription job ID. |
+| `data[].status` | string | Job lifecycle status: `queued`, `processing`, `completed`, or `failed`. See [Poll the job](/upload#4-poll-the-job). |
+| `data[].name` | string or `null` | Display name for the job. |
+| `data[].language` | string | Language code as you sent it. Reads `auto` when you asked for detection. |
+| `data[].diarize` | boolean | Whether you requested speaker separation. |
+| `data[].created_at` | string | When the job was created, as an ISO 8601 timestamp. |
+| `data[].updated_at` | string | When the job was last updated, as an ISO 8601 timestamp. |
+| `total_count` | number | Total number of jobs across all pages. |
+| `current_page` | number | The page returned. |
+| `last_page` | number | The last page number. |
 
 ## 2. Check a transcription's status
 
@@ -212,7 +266,7 @@ if data["plain_text"] is not None:
 | Field | Type | Description |
 | --- | --- | --- |
 | `plain_text` | string or `null` | The full transcript as a single string. `null` on a transcription with no speech. |
-| `word_count` | number or `null` | Total word count of the transcript, when available. |
+| `word_count` | number or `null` | Total word count of the transcript. `null` when the count is not available, and always on a transcription with no speech. |
 | `transcription` | object[] or `null` | The same content split into paragraphs. `null` on a transcription with no speech. |
 | `transcription[].speaker_key` | string | Speaker of the paragraph. Present when you requested `diarize: true`. |
 | `transcription[].start_time_seconds` | number | When the paragraph starts, in seconds. |

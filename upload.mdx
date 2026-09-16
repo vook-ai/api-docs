@@ -286,7 +286,7 @@ print(resp.json()["plain_text"])
 | Field | Type | Description |
 | --- | --- | --- |
 | `plain_text` | string or `null` | The full transcript as a single string. `null` on a transcription with no speech. |
-| `word_count` | number or `null` | Total word count of the transcript, when available. |
+| `word_count` | number or `null` | Total word count of the transcript. `null` when the count is not available, and always on a transcription with no speech. |
 | `transcription` | object[] or `null` | The same content split into paragraphs. `null` on a transcription with no speech. |
 | `transcription[].speaker_key` | string | Speaker of the paragraph. Present when you requested `diarize: true`. |
 | `transcription[].start_time_seconds` | number | When the paragraph starts, in seconds. |
