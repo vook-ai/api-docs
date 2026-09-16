@@ -24,7 +24,7 @@ The Python examples use the `requests` package (`pip install requests`).
 | Step | Call | What you get |
 | --- | --- | --- |
 | 1 | `POST /api/v1/uploads/init` | An `upload_url` and an `upload_token`. |
-| 2 | `POST {upload_url}` | The file bytes are stored. |
+| 2 | `POST {upload_url}` | The file is stored, and you get its `size_bytes`. |
 | 3 | `POST /api/v1/transcription-jobs` | A job `id` to follow. |
 
 Then poll the job, or receive a [webhook](/webhooks), and read its transcript.
@@ -100,8 +100,9 @@ resp.raise_for_status()
 </CodeGroup>
 
 Large files take a while to send, and the request returns only once the whole
-file has arrived. To show progress while it runs, track the bytes sent on your
-side, as the curl example does with `--progress-bar`.
+file is stored. Give it a generous timeout, so a large upload is not cut off
+before it completes. To show progress while it runs, track the bytes sent on
+your side, as the curl example does with `--progress-bar`.
 
 The fields are:
 
@@ -110,7 +111,29 @@ The fields are:
 | `chunk` | form file | The raw file bytes. |
 | `Authorization` | header | `Bearer {upload_token}`. |
 
-A `2xx` status means the file is stored. Continue to step 3.
+A successful upload returns `201`:
+
+```json
+{
+  "size_bytes": 52428800
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `size_bytes` | number | Size of the stored file, in bytes. |
+
+A `2xx` status means the file is stored. **Wait for this response before you
+create the job in step 3.**
+
+If the upload does not succeed, the response uses the same
+[error body](/errors#the-error-body) as the rest of the API:
+
+| Status | Code | Next step |
+| --- | --- | --- |
+| `401` | `unauthorized` | The `upload_token` was not accepted. Get a new one from step 1 and upload again. |
+| `413` | `upload_too_large` | The file is above the 6 GB [limit](/errors#limits). Send a file of 6 GB or less. |
+| `502` | `upload_failed` | The file was not stored. Upload it again with the same `upload_token`. |
 
 ## 3. Create the transcription job
 
@@ -178,6 +201,11 @@ The request body fields are:
 
 If your account has no credit left for this request, it returns `402` with the
 error code `insufficient_api_credits`. Top up, then send the request again.
+
+If no file is stored for the `upload_token`, for example because step 2 did not
+complete, the request returns `409` with the error code `upload_not_found`. No
+job is created and the token stays valid. Finish the upload, wait for its `201`,
+then send this request again with the same token.
 
 ## 4. Poll the job
 
