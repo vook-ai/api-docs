@@ -81,7 +81,8 @@ key.
 ```bash curl
 curl -X POST "$UPLOAD_URL" \
   -H "Authorization: Bearer $UPLOAD_TOKEN" \
-  -F "chunk=@meeting.mp3"
+  -F "chunk=@meeting.mp3" \
+  --progress-bar -o upload-response.json
 ```
 
 ```python Python
@@ -97,6 +98,10 @@ resp.raise_for_status()
 ```
 
 </CodeGroup>
+
+Large files take a while to send, and the request returns only once the whole
+file has arrived. To show progress while it runs, track the bytes sent on your
+side, as the curl example does with `--progress-bar`.
 
 The fields are:
 
