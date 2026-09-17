@@ -2,8 +2,6 @@
   "permissions": {
     "additionalDirectories": [
       "/tmp",
-      "packages/backend/tmp",
-      "/Users/jeremyrippert/Documents/dev/vook/whisper-web/packages/backend/tmp",
       "/Users/jeremyrippert/Documents/dev/vook/front",
       "/Users/jeremyrippert/Documents/dev/vook/front/src"
     ],
