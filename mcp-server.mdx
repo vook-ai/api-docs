@@ -74,6 +74,7 @@ Once connected, ask in plain language:
 - "Find my transcription named weekly sync and export it as subtitles to
   `/Users/me/Desktop/sync.srt`."
 - "Transcribe https://example.com/podcast/episode-12.mp3 in French."
+- "Summarize my transcription named weekly sync."
 
 The assistant picks the right tools, waits for the transcription to finish
 and reads the result.
@@ -87,6 +88,7 @@ and reads the result.
 | `get_job` | Reports a job's status, and can wait up to 50 seconds for it to finish. |
 | `list_transcriptions` | Lists your transcriptions. Search matches transcription names. |
 | `get_transcript` | Returns the transcript text with speakers and timestamps, page by page. |
+| `summarize_transcript` | Returns a Markdown summary of a transcription, in its language. Each transcription has one summary; asking again returns the same one at no extra cost. |
 | `export_transcript` | Exports as SRT, Markdown or HTML, or writes a PDF or DOCX file to disk. |
 
 The server reads and creates transcriptions. Deleting stays in the web app and
