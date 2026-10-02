@@ -1,0 +1,108 @@
+---
+title: "Use Vook from AI assistants"
+sidebarTitle: "AI assistants (MCP)"
+description: "Let Claude, Cursor and other MCP clients transcribe audio and read your transcripts through the Vook API."
+---
+
+The Vook MCP server lets an AI assistant work with your recordings directly.
+Ask it to transcribe a meeting, then summarize it, pull out action items or
+export subtitles, all inside the tool you already use.
+
+**MCP** (Model Context Protocol) is an open standard that lets AI assistants
+call external tools. The Vook server runs on your machine and turns each tool
+call into a regular API request made with your API key. Usage spends your API
+credits exactly as the API does.
+
+## Before you start
+
+You need:
+
+- an API key (see [Authentication](/authentication)),
+- Node.js 22 or later.
+
+## Install
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add vook --env VOOK_API_KEY=vk_live_xxxxxxxx -- npx -y vook-mcp
+    ```
+  </Tab>
+  <Tab title="Claude Desktop">
+    Open **Settings > Developer > Edit config** and add the `vook` entry:
+
+    ```json
+    {
+      "mcpServers": {
+        "vook": {
+          "command": "npx",
+          "args": ["-y", "vook-mcp"],
+          "env": { "VOOK_API_KEY": "vk_live_xxxxxxxx" }
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop.
+  </Tab>
+  <Tab title="Cursor">
+    Add the same `vook` entry to `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "vook": {
+          "command": "npx",
+          "args": ["-y", "vook-mcp"],
+          "env": { "VOOK_API_KEY": "vk_live_xxxxxxxx" }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Any other MCP client that runs local servers works with the same command and
+environment variable.
+
+## Try it
+
+Once connected, ask in plain language:
+
+- "Transcribe `/Users/me/Downloads/interview.mp3` with speaker labels, then
+  list the main decisions."
+- "Find my transcription named weekly sync and export it as subtitles to
+  `/Users/me/Desktop/sync.srt`."
+- "Transcribe https://example.com/podcast/episode-12.mp3 in French."
+
+The assistant picks the right tools, waits for the transcription to finish
+and reads the result.
+
+## Tools
+
+| Tool | What it does |
+| --- | --- |
+| `transcribe_file` | Uploads an audio or video file from your machine (up to 6 GB) and starts a transcription. Other file types are refused before anything leaves your machine. |
+| `transcribe_url` | Starts a transcription from a public https link. |
+| `get_job` | Reports a job's status, and can wait up to 50 seconds for it to finish. |
+| `list_transcriptions` | Lists your transcriptions. Search matches transcription names. |
+| `get_transcript` | Returns the transcript text with speakers and timestamps, page by page. |
+| `export_transcript` | Exports as SRT, Markdown or HTML, or writes a PDF or DOCX file to disk. |
+
+The server reads and creates transcriptions. Deleting stays in the web app and
+the API, so content inside a recording can never remove your data.
+
+## Credits
+
+Transcriptions started from an assistant use your API credits at the same rate
+as the API. If your balance runs out, the assistant reports the
+`insufficient_api_credits` error; top up from the web app and ask again.
+
+## Configuration
+
+| Variable | Required | Default |
+| --- | --- | --- |
+| `VOOK_API_KEY` | Yes | |
+| `VOOK_API_URL` | No | `https://www.api.vook.ai` |
+
+Next: [Errors and limits](/errors) lists every error code an assistant can report.
