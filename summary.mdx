@@ -1,0 +1,165 @@
+---
+title: "Summarize a transcription"
+sidebarTitle: "Summary"
+description: "Get a Markdown summary of a completed transcription in one request."
+---
+
+A summary gives you the key points of a recording without reading the whole
+transcript. You send one request and the summary comes back in the response,
+written in Markdown and in the language of the transcript.
+
+## Before you start
+
+Mint an API key (see [Authentication](/authentication)) and export it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+You also need the `id` of a transcription with `status` `completed`. See
+[Retrieve and export](/retrieve-export) to find one.
+
+The Python examples use the `requests` package (`pip install requests`).
+
+## 1. Create the summary
+
+Send a `POST` with no body. Vook writes the summary and returns it in the same
+response.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/transcriptions/$ID/summary" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+import os, requests
+
+BASE = "https://www.api.vook.ai/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['VOOK_API_KEY']}"}
+
+resp = requests.post(
+    f"{BASE}/transcriptions/{transcription_id}/summary", headers=headers
+)
+resp.raise_for_status()
+print(resp.json()["summary"])
+```
+
+</CodeGroup>
+
+A successful request returns `200` with the summary:
+
+```json
+{
+  "transcription_id": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "completed",
+  "summary": "## Key points\n\n- The launch moves to March.",
+  "created_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `transcription_id` | string | The summarized transcription. |
+| `status` | string | Where the summary is in its lifecycle. See the table below. |
+| `summary` | string or `null` | The summary, as Markdown, in the language of the transcript. `null` while `status` is `processing`. |
+| `created_at` | string | When the summary was requested, as an ISO 8601 timestamp. |
+
+| Status | Meaning |
+| --- | --- |
+| `processing` | The summary is being written. Read it again until it is `completed`. |
+| `completed` | The summary is written and in the `summary` field. |
+
+A `POST` always returns `completed`. You see `processing` only when you read a
+summary that another request is still writing.
+
+Each transcription has **one summary**. Sending the `POST` again returns the
+same summary, so you can safely repeat the call. The request takes no options:
+the summary's length and style are set by Vook.
+
+## 2. Read the summary
+
+Get the summary of a transcription at any time after it is created.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/transcriptions/$ID/summary" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/transcriptions/{transcription_id}/summary", headers=headers
+)
+resp.raise_for_status()
+data = resp.json()
+if data["status"] == "completed":
+    print(data["summary"])
+```
+
+</CodeGroup>
+
+```json
+{
+  "transcription_id": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "completed",
+  "summary": "## Key points\n\n- The launch moves to March.",
+  "created_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+The fields are the same as when you [create the summary](#1-create-the-summary).
+
+If the transcription has no summary yet, the request returns `404` with the code
+`summary_not_found`. Send the `POST` to create one.
+
+## If your connection drops
+
+The summary keeps being written after your connection closes, and it is saved to
+the transcription. Recover it by reading it instead of waiting on a new `POST`:
+
+1. Read the summary every few seconds while `status` is `processing`.
+2. Once `status` is `completed`, the summary is in the response.
+3. If the read returns `404` `summary_not_found` after a `processing` one, the
+   summary could not be written. Send the `POST` again.
+
+A `POST` sent while another request is still writing the summary returns `409`
+with the code `summary_in_progress`. Read the summary until it is `completed`
+instead.
+
+## Errors
+
+| Code | Status | Next step |
+| --- | --- | --- |
+| `summary_not_found` | `404` | On a read: the transcription has no summary. Send the `POST`. |
+| `transcription_not_completed` | `409` | The transcription is still processing. Wait until it is `completed`, then retry. |
+| `transcription_not_summarizable` | `409` | The transcription is empty or failed, so there is nothing to summarize. Do not retry. |
+| `summary_in_progress` | `409` | Another request is writing the summary. Read it until `status` is `completed`. |
+
+An unknown transcription `id` returns `404` with the code `not_found`. See
+[Errors and limits](/errors) for the error body and retry rules.
+
+## Continue the summary as a chat
+
+The summary is saved as a chat titled `Summary` on the transcription, holding
+the summary as its only message. If [chat](/chat) is enabled for your account,
+the chat shows up when you list the chats of the transcription, and you can add
+follow-up prompts to it like any other chat.
+
+## Retention
+
+A summary lives as long as its transcription. When you delete the transcription,
+its summary is deleted with it. See [Data retention](/retention).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Chat with a transcript" icon="comments" href="/chat">
+    Ask your own questions about a transcription.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Try every endpoint interactively in the playground.
+  </Card>
+</CardGroup>
