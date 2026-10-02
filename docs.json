@@ -28,7 +28,7 @@
           "retrieve-export",
           "summary",
           "chat",
-          "mcp",
+          "mcp-server",
           "errors",
           "retention"
         ]
