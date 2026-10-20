@@ -43,8 +43,5 @@ The spec is a manual snapshot. Re-sync it when the API changes:
 curl -s https://www.api.vook.ai/api/v1/docs-json -o api-reference/openapi.json
 ```
 
-Then re-add the `servers` block so the playground has a callable base URL:
-
-```json
-"servers": [{ "url": "https://www.api.vook.ai", "description": "Production" }]
-```
+The spec ships its own `servers` block, which gives the playground its base URL.
+Check it reads `https://www.api.vook.ai` after each sync.

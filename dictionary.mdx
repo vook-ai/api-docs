@@ -1,0 +1,293 @@
+---
+title: "Custom dictionary"
+sidebarTitle: "Dictionary"
+description: "Teach your transcriptions the words and names you use, and rewrite the ones they get wrong."
+---
+
+Your dictionary makes transcripts spell your product names, people and jargon
+the way you write them. It holds two kinds of entries, one dictionary per
+language:
+
+- **Vocabulary words** teach your transcriptions a word or a name they should
+  recognize, such as `Tumblr`.
+- **Replacement rules** rewrite a word as it gets transcribed into the one you
+  want, such as `tumbler` into `Tumblr`.
+
+Both apply to every transcription in that language, from the API and the Vook
+web app alike. The dictionary supports English (`en`) and French (`fr`).
+
+## Before you start
+
+Mint an API key (see [Authentication](/authentication)) and export it:
+
+```bash
+export VOOK_API_KEY=vk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The Python examples use the `requests` package (`pip install requests`).
+
+## 1. Add a vocabulary word
+
+Send the word and the language of the dictionary that holds it.
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/dictionary/vocabulary" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"language": "en", "word": "Tumblr"}'
+```
+
+```python Python
+import os, requests
+
+BASE = "https://www.api.vook.ai/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['VOOK_API_KEY']}"}
+
+resp = requests.post(
+    f"{BASE}/dictionary/vocabulary",
+    headers=headers,
+    json={"language": "en", "word": "Tumblr"},
+)
+resp.raise_for_status()
+print(resp.json()["id"])
+```
+
+</CodeGroup>
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `language` | string | **Required.** Language of the dictionary to add to: `en` or `fr`. |
+| `word` | string | **Required.** A word or name your transcriptions should recognize, from 1 to 255 characters. |
+
+A successful request returns `200` with the entry:
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "language": "en",
+  "word": "Tumblr",
+  "created_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Vocabulary entry ID. Use it to delete the word. |
+| `language` | string | Language of the dictionary holding the entry. |
+| `word` | string | The vocabulary word. |
+| `created_at` | string | When the entry was created, as an ISO 8601 timestamp. |
+
+Adding a word you already have returns the existing entry, so you can send your
+full list again safely.
+
+## 2. Add a replacement rule
+
+Send the word as it gets transcribed (`source_word`) and the word you want in
+its place (`destination_word`).
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "https://www.api.vook.ai/api/v1/dictionary/replacements" \
+  -H "Authorization: Bearer $VOOK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"language": "en", "source_word": "tumbler", "destination_word": "Tumblr"}'
+```
+
+```python Python
+resp = requests.post(
+    f"{BASE}/dictionary/replacements",
+    headers=headers,
+    json={
+        "language": "en",
+        "source_word": "tumbler",
+        "destination_word": "Tumblr",
+    },
+)
+resp.raise_for_status()
+print(resp.json()["id"])
+```
+
+</CodeGroup>
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `language` | string | **Required.** Language of the dictionary to add to: `en` or `fr`. |
+| `source_word` | string | **Required.** The word as it gets transcribed, which you want rewritten, from 1 to 255 characters. |
+| `destination_word` | string | **Required.** The word your transcriptions show instead, from 1 to 255 characters. |
+
+A successful request returns `200` with the rule:
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "language": "en",
+  "source_word": "tumbler",
+  "destination_word": "Tumblr",
+  "created_at": "2024-01-15T10:30:00.000Z"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Replacement rule ID. Use it to delete the rule. |
+| `language` | string | Language of the dictionary holding the rule. |
+| `source_word` | string | The word as it gets transcribed. |
+| `destination_word` | string | The word your transcriptions show instead. |
+| `created_at` | string | When the rule was created, as an ISO 8601 timestamp. |
+
+A source word has **one rule**. Sending it again with another
+`destination_word` updates the rule, so you can safely repeat the call.
+
+## 3. List your dictionary
+
+List the vocabulary words or the replacement rules of one language. The
+vocabulary list includes starter words added when you set up your account.
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/dictionary/vocabulary?language=en" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/dictionary/vocabulary",
+    headers=headers,
+    params={"language": "en"},
+)
+resp.raise_for_status()
+for entry in resp.json()["data"]:
+    print(entry["id"], entry["word"])
+```
+
+</CodeGroup>
+
+The response is paginated:
+
+```json
+{
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "language": "en",
+      "word": "Tumblr",
+      "created_at": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "total_count": 100,
+  "current_page": 1,
+  "last_page": 10
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `data` | object[] | The vocabulary words on this page. Each has the fields of [a vocabulary entry](#1-add-a-vocabulary-word): `id`, `language`, `word`, `created_at`. |
+| `total_count` | number | Total number of words across all pages. |
+| `current_page` | number | The page returned. |
+| `last_page` | number | The last page number. |
+
+List the replacement rules the same way, at `GET /api/v1/dictionary/replacements`:
+
+<CodeGroup>
+
+```bash curl
+curl "https://www.api.vook.ai/api/v1/dictionary/replacements?language=en" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.get(
+    f"{BASE}/dictionary/replacements",
+    headers=headers,
+    params={"language": "en"},
+)
+resp.raise_for_status()
+for rule in resp.json()["data"]:
+    print(rule["source_word"], "->", rule["destination_word"])
+```
+
+</CodeGroup>
+
+```json
+{
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "language": "en",
+      "source_word": "tumbler",
+      "destination_word": "Tumblr",
+      "created_at": "2024-01-15T10:30:00.000Z"
+    }
+  ],
+  "total_count": 100,
+  "current_page": 1,
+  "last_page": 10
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `data` | object[] | The replacement rules on this page. Each has the fields of [a replacement rule](#2-add-a-replacement-rule): `id`, `language`, `source_word`, `destination_word`, `created_at`. |
+| `total_count` | number | Total number of rules across all pages. |
+| `current_page` | number | The page returned. |
+| `last_page` | number | The last page number. |
+
+Both lists take these query parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `language` | **Required.** Language of the dictionary to list: `en` or `fr`. |
+| `page` | Page number. |
+| `page_size` | Items per page, a whole number from `1` to `100`. Defaults to `10`. Any other value returns `400 invalid_request`. |
+
+## 4. Delete an entry
+
+Delete a word or a rule by its `id`.
+
+<CodeGroup>
+
+```bash curl
+curl -X DELETE "https://www.api.vook.ai/api/v1/dictionary/vocabulary/$ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+
+curl -X DELETE "https://www.api.vook.ai/api/v1/dictionary/replacements/$ID" \
+  -H "Authorization: Bearer $VOOK_API_KEY"
+```
+
+```python Python
+resp = requests.delete(f"{BASE}/dictionary/vocabulary/{entry_id}", headers=headers)
+resp.raise_for_status()
+
+resp = requests.delete(f"{BASE}/dictionary/replacements/{rule_id}", headers=headers)
+resp.raise_for_status()
+```
+
+</CodeGroup>
+
+A successful request returns `204` with an empty body. Deleting an entry that is
+already gone succeeds too, so you can retry safely.
+
+## Errors
+
+| Code | Status | Next step |
+| --- | --- | --- |
+| `dictionary_entry_common_word` | `400` | The word is a common word such as `the`, which would rewrite ordinary speech in every transcript. Use a more specific word. |
+| `invalid_request` | `400` | A field is missing or invalid: an unsupported `language`, a word that is empty or longer than 255 characters, or a `page_size` outside `1` to `100`. See `validation_errors`, fix the request. |
+
+See [Errors and limits](/errors) for the error body and retry rules.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Transcribe from a file" icon="upload" href="/upload">
+    Send a recording and get a transcript that uses your dictionary.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Try every endpoint interactively in the playground.
+  </Card>
+</CardGroup>
