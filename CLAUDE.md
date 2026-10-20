@@ -19,8 +19,8 @@ pnpm dlx mint dev      # local preview at http://localhost:3000
 
 - Content root is the repo root. Mintlify config is `docs.json`.
 - API Reference is auto-generated from `api-reference/openapi.json` (manual
-  snapshot, re-sync with `curl … /api/v1/docs-json` and re-add the `servers`
-  block when the API changes).
+  snapshot, re-sync with `curl … /api/v1/docs-json` when the API changes; the
+  spec carries its own `servers` block).
 - **Never edit `api-reference/openapi.json` by hand.** It is a generated snapshot
   of the NestJS Swagger output; any direct edit (descriptions, summaries, schemas)
   is overwritten on the next re-sync. Fix the source decorators

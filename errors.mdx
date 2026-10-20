@@ -50,6 +50,7 @@ The status tells you what to do next:
 | Code | Status | Meaning and next step |
 | --- | --- | --- |
 | `invalid_request` | `400` and other `4xx` | The request is malformed or a parameter is invalid. See `validation_errors`, fix the request. |
+| `dictionary_entry_common_word` | `400` | The word sent to your [dictionary](/dictionary) is a common word such as `the`, which would rewrite ordinary speech in every transcript. Use a more specific word. |
 | `invalid_callback_url` | `400` | `callback_url` is not public https on a standard port. See [Webhooks](/webhooks). |
 | `url_not_supported` | `400` | The source `url` is not https, or uses a non-standard port. Fix the URL. |
 | `url_not_media` | `400` | The source `url` answered, but it is not audio or video (for example a web page). Send a direct link to the media file. |
