@@ -57,5 +57,35 @@
     "socials": {
       "website": "https://www.vook.ai"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/api-reference/chats-api-v1/ask-a-question-about-a-transcript-and-get-the-answer",
+      "destination": "/api-reference/chats-api-v1-beta/open-a-chat-over-a-transcript-and-answer-its-first-prompt"
+    },
+    {
+      "source": "/api-reference/chats-api-v1/get-a-single-chat-including-its-answer",
+      "destination": "/api-reference/chats-api-v1-beta/get-a-chat-with-its-messages"
+    },
+    {
+      "source": "/api-reference/chats-api-v1/list-the-chats-for-a-transcription",
+      "destination": "/api-reference/chats-api-v1-beta/list-the-chats-of-a-transcription"
+    },
+    {
+      "source": "/api-reference/transcription-jobs-api-v1/create-a-transcription-job-from-an-uploaded-file",
+      "destination": "/api-reference/transcription-jobs-api-v1/create-a-transcription-job-from-an-uploaded-file-or-a-url"
+    },
+    {
+      "source": "/api-reference/transcription-jobs-api-v1/create-a-transcription-job-from-an-uploaded-file-call-3-returns-the-job-id-status",
+      "destination": "/api-reference/transcription-jobs-api-v1/create-a-transcription-job-from-an-uploaded-file-or-a-url"
+    },
+    {
+      "source": "/api-reference/transcription-jobs-api-v1/get-a-transcription-job-by-id-status-transcription-ids",
+      "destination": "/api-reference/transcription-jobs-api-v1/get-a-transcription-job-by-id"
+    },
+    {
+      "source": "/api-reference/uploads-api-v1/mint-a-scoped-upload-token-for-an-ingress-file-upload",
+      "destination": "/api-reference/uploads-api-v1/mint-a-single-use-upload-token-for-a-file"
+    }
+  ]
 }
